@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/l-j.co/profile/*", "destination": "/l-j.co/profile/index.html" }
+  ]
+}

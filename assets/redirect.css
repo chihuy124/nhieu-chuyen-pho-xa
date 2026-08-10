@@ -1,0 +1,33 @@
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  color: #171717;
+  background: #fff;
+  font: 16px/1.5 system-ui, sans-serif;
+  text-align: center;
+}
+.card { max-width: 420px; }
+.card img { width: 112px; height: 112px; margin: auto; border-radius: 50%; object-fit: cover; }
+.card h1 { margin: 18px 0 8px; font-size: 24px; }
+.card p { margin: 0; color: #666; }
+.fallback { display: inline-block; margin-top: 22px; border: 0; padding: 12px 16px; color: #fff; background:#111; border-radius:8px; font:inherit; text-decoration:none; cursor:pointer; }
+.iab-escape-modal { position:fixed; inset:0; z-index:999999; display:flex; justify-content:center; align-items:center; background:rgba(0,0,0,.8); font-family:system-ui,sans-serif; }
+.iab-escape-content { max-width:400px; margin:20px; padding:30px; background:#fff; border-radius:12px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,.3); }
+.iab-escape-title { margin:0 0 15px; color:#333; }
+.iab-escape-message { margin:0 0 20px; color:#666; line-height:1.5; }
+.iab-escape-instructions { margin:15px 0; padding:15px; color:#555; background:#f5f5f5; border-radius:8px; font-size:14px; }
+.iab-escape-actions { margin-top:20px; }
+.iab-escape-button { border:0; padding:12px 24px; color:#fff; border-radius:8px; font-size:16px; cursor:pointer; }
+.iab-escape-button-primary { margin-right:10px; background:#007aff; }
+.iab-escape-button-secondary { background:#666; }
+.iab-clipboard-fallback { position:fixed; opacity:0; }
+.iab-quick-overlay { position:fixed; inset:0; z-index:999999; display:flex; flex-direction:column; justify-content:center; align-items:center; box-sizing:border-box; padding:20px; color:#fff; background:rgba(0,0,0,.9); font-family:system-ui,sans-serif; text-align:center; }
+.iab-quick-content { max-width:350px; }
+.iab-quick-content h2 { margin:0 0 20px; font-size:24px; }
+.iab-quick-message { margin:0 0 20px; font-size:16px; line-height:1.5; }
+.iab-quick-note { margin:20px 0; padding:15px; background:rgba(255,255,255,.1); border-radius:8px; }
+.iab-quick-note p { margin:0; font-size:14px; }
+.iab-quick-close { margin-top:20px; }

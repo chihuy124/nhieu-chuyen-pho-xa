@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <title>Đang tải bài viết…</title>
+  <link rel="icon" href="/assets/ncdp-street-icon.webp" type="image/webp" />
+  <link rel="apple-touch-icon" href="/assets/ncdp-street-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/site.css?v=3" />
+</head>
+<body>
+  <a class="skip-link" href="#content">Chuyển đến phần nội dung</a>
+  <header class="site-header">
+    <a class="site-name article-site-name" href="/">
+      <img class="site-name-logo" data-site-logo src="/assets/ncdp-street-icon.webp" alt="" />
+      <span data-site-title>Nhiều Chuyện Đường Phố</span>
+    </a>
+  </header>
+
+  <main id="content" class="article-shell">
+    <article id="article" aria-live="polite">
+      <div class="article-loading"><div></div><div></div><div></div></div>
+    </article>
+    <div id="article-error" class="empty-state" hidden>
+      <h1>Không tìm thấy bài viết</h1>
+      <p>Bài viết có thể đã được gỡ hoặc chưa xuất bản.</p>
+      <a class="button-link" href="/">Về trang chủ</a>
+    </div>
+  </main>
+
+  <div id="promo-overlay" class="promo-overlay" role="dialog" aria-modal="true" aria-label="Khuyến mãi" hidden>
+    <div class="promo-card">
+      <img id="promo-image" alt="Khuyến mãi đặc biệt" />
+      <button id="promo-close" class="promo-close" type="button" aria-label="Mở ưu đãi và đóng quảng cáo">×</button>
+    </div>
+  </div>
+
+  <script src="/assets/shared.js" defer></script>
+  <script src="/assets/post.js?v=7" defer></script>
+</body>
+</html>

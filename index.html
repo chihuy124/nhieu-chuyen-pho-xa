@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Chuyện đường phố, video và những câu chuyện đáng chú ý mỗi ngày." />
+  <title>Nhiều Chuyện Đường Phố</title>
+  <link rel="icon" href="/assets/ncdp-street-icon.webp" type="image/webp" />
+  <link rel="apple-touch-icon" href="/assets/ncdp-street-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/site.css" />
+</head>
+<body>
+  <a class="skip-link" href="#content">Chuyển đến phần nội dung</a>
+  <header class="site-header">
+    <a class="site-name" href="/" data-site-title>Nhiều Chuyện Đường Phố</a>
+  </header>
+
+  <main id="content" class="home-shell">
+    <section class="brand-intro">
+      <img class="brand-logo" data-site-logo src="/assets/ncdp-street-icon.webp" alt="Biểu tượng Nhiều Chuyện Phố Xá" />
+      <div>
+        <p class="eyebrow">Tin mới mỗi ngày</p>
+        <h1>Những câu chuyện đang được quan tâm</h1>
+        <p data-site-description>Chuyện đường phố, video và những câu chuyện đáng chú ý mỗi ngày.</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="latest-title">
+      <div class="section-heading">
+        <h2 id="latest-title">Bài viết mới</h2>
+        <span id="post-count" class="post-count"></span>
+      </div>
+      <div id="post-list" class="post-grid" aria-live="polite">
+        <div class="loading-card"></div><div class="loading-card"></div><div class="loading-card"></div>
+      </div>
+      <div id="empty-state" class="empty-state" hidden>
+        <h2>Chưa có bài viết</h2>
+        <p>Nội dung mới sẽ sớm được cập nhật.</p>
+      </div>
+      <nav id="pagination" class="pagination" aria-label="Phân trang"></nav>
+    </section>
+  </main>
+
+  <footer class="site-footer"><span data-site-title>Nhiều Chuyện Đường Phố</span> · Nội dung cập nhật mỗi ngày</footer>
+  <script src="/assets/shared.js" defer></script>
+  <script src="/assets/home.js" defer></script>
+</body>
+</html>

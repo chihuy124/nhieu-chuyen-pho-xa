@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Quản trị nội dung</title>
+  <link rel="icon" href="/assets/ncdp-street-icon.webp" type="image/webp" />
+  <link rel="apple-touch-icon" href="/assets/ncdp-street-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/admin/admin.css?v=3" />
+</head>
+<body>
+  <main id="login-screen" class="login-screen">
+    <form id="login-form" class="login-card">
+      <img class="brand-mark" src="/assets/ncdp-street-icon.webp" alt="Biểu tượng Nhiều Chuyện Phố Xá" />
+      <p class="eyebrow">Khu vực quản trị</p>
+      <h1>Đăng nhập</h1>
+      <p>Quản lý bài viết, video, crawler và chiến dịch chuyển hướng.</p>
+      <label>Mật khẩu admin<input id="login-password" type="password" autocomplete="current-password" required /></label>
+      <button class="primary-button" type="submit">Đăng nhập</button>
+      <p id="login-error" class="form-error" role="alert"></p>
+    </form>
+  </main>
+
+  <div id="admin-app" class="admin-layout" hidden>
+    <aside class="sidebar">
+      <a class="admin-brand" href="/"><img class="brand-mark" src="/assets/ncdp-street-icon.webp" alt="" /><strong>Content Studio</strong></a>
+      <nav class="admin-nav" aria-label="Điều hướng quản trị">
+        <button class="nav-item active" data-section="overview">Tổng quan</button>
+        <button class="nav-item" data-section="posts">Bài viết &amp; video</button>
+        <button class="nav-item" data-section="crawl">Crawl nội dung</button>
+        <button class="nav-item" data-section="links">Link Facebook</button>
+        <button class="nav-item" data-section="settings">Cấu hình website</button>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="/" target="_blank" rel="noopener">Xem website ↗</a>
+        <button id="logout-button" type="button">Đăng xuất</button>
+      </div>
+    </aside>
+
+    <div class="admin-main">
+      <header class="admin-topbar">
+        <button id="sidebar-toggle" class="sidebar-toggle" type="button" aria-label="Mở menu">☰</button>
+        <div><p class="eyebrow">Nhiều Chuyện Đường Phố</p><h1 id="section-title">Tổng quan</h1></div>
+        <button id="new-post-top" class="primary-button compact" type="button">+ Bài viết mới</button>
+      </header>
+
+      <section class="admin-content section-panel" data-panel="overview">
+        <div class="metric-grid">
+          <article class="metric-card"><span>Tổng bài viết</span><strong id="metric-posts">—</strong><small>Đã crawl và tạo thủ công</small></article>
+          <article class="metric-card"><span>Video trong trang này</span><strong id="metric-videos">—</strong><small>MP4 và liên kết video</small></article>
+          <article class="metric-card accent"><span>Đã đăng trong trang này</span><strong id="metric-published">—</strong><small>Hiển thị ngoài website</small></article>
+        </div>
+        <div class="content-card">
+          <div class="card-heading"><div><p class="eyebrow">Gần đây</p><h2>Bài viết mới cập nhật</h2></div><button class="text-button" data-go="posts">Xem tất cả</button></div>
+          <div id="recent-posts" class="recent-list"></div>
+        </div>
+      </section>
+
+      <section class="admin-content section-panel" data-panel="posts" hidden>
+        <div class="toolbar">
+          <div><p class="eyebrow">Thư viện nội dung</p><h2>Bài viết &amp; video</h2></div>
+          <button id="new-post-button" class="primary-button" type="button">+ Tạo bài viết</button>
+        </div>
+        <div class="content-card table-card">
+          <div id="posts-table" class="posts-table" aria-live="polite"></div>
+          <nav id="admin-pagination" class="admin-pagination" aria-label="Phân trang bài viết"></nav>
+        </div>
+      </section>
+
+      <section class="admin-content section-panel" data-panel="crawl" hidden>
+        <div class="split-layout">
+          <form id="crawl-form" class="content-card form-card">
+            <p class="eyebrow">WordPress Importer</p>
+            <h2>Crawl nội dung</h2>
+            <p class="muted">Chọn một ngày để crawl nhanh, hoặc chuyển sang khoảng ngày khi cần. Hệ thống có thể chạy lại mà không tạo bản sao.</p>
+            <label>Nguồn crawl
+              <select id="crawl-source">
+                <option value="https://nhieuchuyenduongpho.com">Nhiều Chuyện Đường Phố</option>
+                <option value="https://honghotduong.com">Hóng Hớt Đường</option>
+              </select>
+            </label>
+            <fieldset class="crawl-mode-picker">
+              <legend>Chế độ crawl</legend>
+              <label><input type="radio" name="crawl-mode" value="single" checked /><span>Theo ngày</span></label>
+              <label><input type="radio" name="crawl-mode" value="range" /><span>Khoảng ngày</span></label>
+            </fieldset>
+            <div id="crawl-single-fields">
+              <label>Ngày cần crawl<input id="crawl-date" type="date" required /></label>
+            </div>
+            <div id="crawl-range-fields" class="field-grid two" hidden>
+              <label>Từ ngày<input id="crawl-from" type="date" /></label>
+              <label>Đến ngày<input id="crawl-to" type="date" /></label>
+            </div>
+            <button id="crawl-button" class="primary-button" type="submit">Bắt đầu crawl</button>
+          </form>
+          <aside class="content-card progress-card">
+            <span id="crawl-status-dot" class="status-dot"></span>
+            <p class="eyebrow">Tiến độ đồng bộ</p>
+            <strong id="crawl-progress-number">0%</strong>
+            <progress id="crawl-progress" class="progress-track" max="100" value="0">0%</progress>
+            <p id="crawl-message" class="muted">Chọn ngày để bắt đầu.</p>
+            <div class="crawl-stats"><span>Đã xử lý<strong id="crawl-processed">0</strong></span><span>Lỗi<strong id="crawl-errors">0</strong></span></div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="admin-content section-panel" data-panel="links" hidden>
+        <div class="split-layout">
+          <form id="link-form" class="content-card form-card">
+            <p class="eyebrow">Chia sẻ Facebook</p>
+            <h2>Tạo link mở bài &amp; TikTok</h2>
+            <label>Chọn bài viết<select id="link-post" required><option value="">Chọn bài viết…</option></select></label>
+            <label>Link TikTok<input id="link-tiktok" type="url" placeholder="https://vt.tiktok.com/..." required /></label>
+            <button class="primary-button" type="submit">Tạo link chia sẻ</button>
+          </form>
+          <aside class="content-card link-result-card">
+            <p class="eyebrow">Link đã tạo</p>
+            <h2>Sẵn sàng chia sẻ</h2>
+            <p id="link-result" class="link-result">Link mới sẽ xuất hiện ở đây.</p>
+            <button id="copy-link" class="secondary-button" type="button" disabled>Sao chép link</button>
+          </aside>
+        </div>
+      </section>
+
+      <section class="admin-content section-panel" data-panel="settings" hidden>
+        <form id="settings-form" class="content-card form-card settings-card">
+          <p class="eyebrow">Nhận diện &amp; quảng cáo</p>
+          <h2>Cấu hình website</h2>
+          <label>Tên website<input id="setting-title" required maxlength="120" /></label>
+          <label>Mô tả website<textarea id="setting-description" rows="3" maxlength="300"></textarea></label>
+          <label>Đường link Fanpage Facebook<input id="setting-fanpage" type="url" placeholder="https://www.facebook.com/ten-fanpage" /></label>
+          <div class="field-grid two">
+            <label>URL banner khuyến mãi<input id="setting-banner" required /></label>
+            <label>Link TikTok mặc định<input id="setting-tiktok" type="url" required /></label>
+          </div>
+          <label class="switch-row"><input id="setting-promo-enabled" type="checkbox" /><span>Bật popup khuyến mãi cho link Facebook</span></label>
+          <h3>Chuỗi popup TikTok &amp; Shopee</h3>
+          <p class="muted">Popup đầu hiện ngay. Popup sau hiện sau 1 giây khi người dùng quay lại.</p>
+          <div class="field-grid two">
+            <label>URL banner Shopee<input id="setting-shopee-banner" placeholder="/assets/banner-shopee.webp hoặc https://..." /></label>
+            <label>Link sản phẩm Shopee<input id="setting-shopee-url" type="url" placeholder="https://s.shopee.vn/..." /></label>
+          </div>
+          <label class="switch-row"><input id="setting-shopee-enabled" type="checkbox" /><span>Bật popup Shopee trong chuỗi quảng cáo</span></label>
+          <label>Thứ tự hiển thị
+            <select id="setting-promo-order">
+              <option value="tiktok-first">TikTok trước → Shopee sau</option>
+              <option value="shopee-first">Shopee trước → TikTok sau</option>
+            </select>
+          </label>
+          <button class="primary-button" type="submit">Lưu cấu hình</button>
+        </form>
+      </section>
+    </div>
+  </div>
+
+  <dialog id="post-dialog" class="post-dialog">
+    <form id="post-form" method="dialog">
+      <header><div><p class="eyebrow">Biên tập nội dung</p><h2 id="post-dialog-title">Tạo bài viết</h2></div><button id="close-dialog" class="icon-button" type="button" aria-label="Đóng">×</button></header>
+      <input id="post-id" type="hidden" />
+      <div class="dialog-body">
+        <div class="field-grid two">
+          <label>Tiêu đề<input id="post-title" required maxlength="240" /></label>
+          <label>Slug<input id="post-slug" placeholder="tu-dong-tu-tieu-de" /></label>
+        </div>
+        <label>Mô tả ngắn<textarea id="post-excerpt" rows="3" maxlength="600"></textarea></label>
+        <label>Nội dung HTML<textarea id="post-content" rows="11" placeholder="<p>Nội dung bài viết…</p>"></textarea></label>
+        <div class="field-grid two">
+          <label>Ảnh đại diện<input id="post-cover" type="url" placeholder="https://..." /></label>
+          <label>Ngày đăng<input id="post-date" type="datetime-local" required /></label>
+        </div>
+        <label>Video — mỗi URL một dòng<textarea id="post-videos" rows="4" placeholder="https://.../video.mp4"></textarea></label>
+        <div class="field-grid two">
+          <label>Link TikTok<input id="post-tiktok" type="url" placeholder="https://vt.tiktok.com/..." /></label>
+          <label>Trạng thái<select id="post-status"><option value="draft">Bản nháp</option><option value="published">Đã xuất bản</option></select></label>
+        </div>
+      </div>
+      <footer><button id="delete-post" class="danger-button" type="button" hidden>Xóa bài</button><span></span><button id="cancel-post" class="secondary-button" type="button">Hủy</button><button class="primary-button" type="submit">Lưu bài viết</button></footer>
+      <p id="post-error" class="form-error" role="alert"></p>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+  <script src="/admin/admin.js?v=9" defer></script>
+</body>
+</html>

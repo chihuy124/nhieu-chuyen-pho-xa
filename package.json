@@ -1,0 +1,15 @@
+{
+  "name": "shim-link",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "test": "node --test",
+    "test:coverage": "node --test --experimental-test-coverage --test-coverage-lines=80 --test-coverage-functions=80 --test-coverage-branches=80",
+    "check": "npm run test:coverage"
+  },
+  "dependencies": {
+    "@jhrunning/inappbrowserescaper": "^1.0.1",
+    "@vercel/kv": "^2.0.0",
+    "sanitize-html": "2.17.5"
+  }
+}
