@@ -9,7 +9,12 @@ const publicPageHandler = require("../lib/api-content/page");
 const promoHandler = require("../lib/api-content/promo");
 const createShimHandler = require("../api/shim/create");
 const profileHandler = require("../api/shim/profile");
-const { DEFAULT_SETTINGS, saveSettings } = require("../lib/content-store");
+const {
+  DEFAULT_SETTINGS,
+  deletePost,
+  savePost,
+  saveSettings,
+} = require("../lib/content-store");
 
 function response() {
   return {
@@ -323,4 +328,34 @@ test("crawl endpoint imports Hongbienpro content and skips redirect wrappers", a
   assert.equal(crawlRes.statusCode, 200);
   assert.equal(parsed(crawlRes).data.processed, 1);
   assert.deepEqual(parsed(crawlRes).data.errors, []);
+});
+
+test("legacy encoded article slugs render the canonical single-encoded URL", async () => {
+  const id = "wp-hongbienpro-com-legacy-emoji";
+  const encodedSlug = "%e2%9d%97%ef%b8%8fngay-luc-nay-%f0%9f%99%8f";
+  await savePost({
+    id,
+    slug: encodedSlug,
+    permalink: `/2026/08/11/${encodeURIComponent(encodedSlug)}/`,
+    title: "Bài emoji",
+    excerpt: "",
+    contentHtml: "<p>Nội dung</p>",
+    videos: [],
+    status: "published",
+    publishedAt: "2026-08-11T13:58:00",
+  });
+  try {
+    for (const slug of [encodedSlug, "❗️ngay-luc-nay-🙏"]) {
+      const pageRes = response();
+      await publicPageHandler(request("GET", {
+        query: { slug },
+        userAgent: "Mozilla/5.0 Chrome/140.0",
+      }), pageRes);
+      assert.equal(pageRes.statusCode, 200);
+      assert.match(pageRes.body, /\/2026\/08\/11\/%E2%9D%97%EF%B8%8Fngay-luc-nay-%F0%9F%99%8F\//);
+      assert.doesNotMatch(pageRes.body, /%25e2/i);
+    }
+  } finally {
+    await deletePost(id);
+  }
 });

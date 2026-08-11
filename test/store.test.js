@@ -42,3 +42,21 @@ test("website logo remains fixed when stored settings try to override it", async
   assert.equal(DEFAULT_SETTINGS.logoUrl, "/assets/ncdp-street-icon.webp");
   assert.equal(DEFAULT_SETTINGS.fanpageUrl, "");
 });
+
+test("legacy double-encoded WordPress slugs resolve through old and canonical URLs", async () => {
+  const client = createMemoryKv();
+  const encodedSlug = "%e2%9d%97%ef%b8%8fngay-luc-nay-%f0%9f%99%8f";
+  await savePost({
+    ...post("wp-hongbienpro-com-20443", encodedSlug, "published", "2026-08-11T13:58:00"),
+    permalink: `/2026/08/11/${encodeURIComponent(encodedSlug)}/`,
+  }, client);
+
+  const listed = await listPosts({ page: 1, limit: 10 }, client);
+  assert.equal(listed.posts[0].slug, "❗️ngay-luc-nay-🙏");
+  assert.equal(listed.posts[0].permalink, "/2026/08/11/%E2%9D%97%EF%B8%8Fngay-luc-nay-%F0%9F%99%8F/");
+  assert.equal((await getPostBySlug("❗️ngay-luc-nay-🙏", client)).id, "wp-hongbienpro-com-20443");
+  assert.equal((await getPostBySlug(encodedSlug, client)).id, "wp-hongbienpro-com-20443");
+
+  assert.equal(await deletePost("wp-hongbienpro-com-20443", client), true);
+  assert.equal(await client.get(`content:slug:${encodedSlug}`), null);
+});

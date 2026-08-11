@@ -87,3 +87,18 @@ test("Hongbienpro posts use a source namespace and redirect wrappers are detecte
     content: { rendered: '<p>const redirectURL = "https://hongbienpro.com/not-a-wrapper";</p>' },
   }), "");
 });
+
+test("WordPress percent-encoded slugs are decoded before creating the permalink", () => {
+  const encodedSlug = "%e2%9d%97%ef%b8%8fngay-luc-nay-%f0%9f%99%8f";
+  const post = normalizeWordPressPost({
+    id: 20443,
+    slug: encodedSlug,
+    link: `https://hongbienpro.com/2026/08/11/${encodedSlug}/`,
+    date: "2026-08-11T13:58:00",
+    title: { rendered: "Bài có emoji" },
+    content: { rendered: '<video src="https://cdn.videy.co/OAi85XxT1.mp4"></video>' },
+  });
+  assert.equal(post.slug, "❗️ngay-luc-nay-🙏");
+  assert.equal(post.permalink, "/2026/08/11/%E2%9D%97%EF%B8%8Fngay-luc-nay-%F0%9F%99%8F/");
+  assert.doesNotMatch(post.permalink, /%25/i);
+});
