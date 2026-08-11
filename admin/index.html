@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/admin/admin.css?v=4" />
+  <link rel="stylesheet" href="/admin/admin.css?v=5" />
 </head>
 <body>
   <main id="login-screen" class="login-screen">
@@ -66,10 +66,13 @@
           <div><p class="eyebrow">Thư viện nội dung</p><h2>Bài viết &amp; video</h2></div>
           <button id="new-post-button" class="primary-button" type="button">+ Tạo bài viết</button>
         </div>
-        <div class="content-card table-card">
-          <div id="posts-table" class="posts-table" aria-live="polite"></div>
-          <nav id="admin-pagination" class="admin-pagination" aria-label="Phân trang bài viết"></nav>
+        <div class="content-card posts-filter-bar">
+          <label>Lọc theo ngày<input id="posts-date-filter" type="date" /></label>
+          <p id="posts-filter-summary" class="muted">Đang hiển thị tất cả bài viết.</p>
+          <button id="clear-posts-date" class="secondary-button" type="button" hidden>Xem tất cả ngày</button>
         </div>
+        <div id="posts-table" class="posts-table date-groups" aria-live="polite"></div>
+        <nav id="admin-pagination" class="admin-pagination" aria-label="Phân trang bài viết"></nav>
       </section>
 
       <section class="admin-content section-panel" data-panel="trash" hidden>
@@ -196,6 +199,6 @@
   </dialog>
 
   <div id="toast" class="toast" role="status" hidden></div>
-  <script src="/admin/admin.js?v=11" defer></script>
+  <script src="/admin/admin.js?v=12" defer></script>
 </body>
 </html>

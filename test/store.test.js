@@ -111,3 +111,23 @@ test("soft-deleted posts stay hidden during recrawl, can be restored, and can be
   await restorePost(draft.id, client);
   assert.equal((await listPosts({ page: 1, limit: 10, publishedOnly: true }, client)).posts.some((item) => item.id === draft.id), false);
 });
+
+test("content repository filters and paginates posts by publication date", async () => {
+  const client = createMemoryKv();
+  await savePost(post("date-1", "date-morning", "published", "2026-08-11T08:00:00Z"), client);
+  await savePost(post("date-2", "date-evening", "published", "2026-08-11T15:30:00Z"), client);
+  await savePost(post("date-3", "date-other", "published", "2026-08-12T09:00:00Z"), client);
+  await savePost(post("date-4", "date-local-midnight", "published", "2026-08-10T19:00:00Z"), client);
+
+  const firstPage = await listPosts({ date: "2026-08-11", page: 1, limit: 1 }, client);
+  assert.deepEqual(firstPage.posts.map((item) => item.id), ["date-2"]);
+  assert.equal(firstPage.total, 3);
+  assert.equal(firstPage.totalPages, 3);
+
+  const secondPage = await listPosts({ date: "2026-08-11", page: 2, limit: 1 }, client);
+  assert.deepEqual(secondPage.posts.map((item) => item.id), ["date-1"]);
+  assert.equal(secondPage.total, 3);
+
+  await assert.rejects(listPosts({ date: "11/08/2026" }, client), /Ngày lọc không hợp lệ/);
+  await assert.rejects(listPosts({ date: "2026-02-30" }, client), /Ngày lọc không hợp lệ/);
+});

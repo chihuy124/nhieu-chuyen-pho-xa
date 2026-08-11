@@ -424,6 +424,10 @@ test("admin can move posts to trash, restore them, and permanently delete only f
     await postsHandler(request("GET", { cookie, query: { page: 1, limit: 50 } }), activeRes);
     assert.equal(parsed(activeRes).data.posts.some((post) => post.id === id), false);
 
+    const filteredOutRes = response();
+    await postsHandler(request("GET", { cookie, query: { page: 1, limit: 50, date: "2026-08-10" } }), filteredOutRes);
+    assert.equal(parsed(filteredOutRes).data.posts.some((post) => post.id === id), false);
+
     const trashListRes = response();
     await postsHandler(request("GET", { cookie, query: { page: 1, limit: 50, trash: "1" } }), trashListRes);
     assert.equal(parsed(trashListRes).data.posts.some((post) => post.id === id), true);
@@ -441,6 +445,14 @@ test("admin can move posts to trash, restore them, and permanently delete only f
     const publicRestoredRes = response();
     await publicPostHandler(request("GET", { query: { slug } }), publicRestoredRes);
     assert.equal(publicRestoredRes.statusCode, 200);
+
+    const filteredInRes = response();
+    await postsHandler(request("GET", { cookie, query: { page: 1, limit: 50, date: "2026-08-11" } }), filteredInRes);
+    assert.equal(parsed(filteredInRes).data.posts.some((post) => post.id === id), true);
+
+    const invalidDateRes = response();
+    await postsHandler(request("GET", { cookie, query: { date: "11/08/2026" } }), invalidDateRes);
+    assert.equal(invalidDateRes.statusCode, 422);
 
     await postHandler(request("DELETE", { cookie, mutation: true, query: { id } }), response());
     const permanentRes = response();

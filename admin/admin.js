@@ -7,7 +7,7 @@
   const loginScreen = document.getElementById("login-screen");
   const app = document.getElementById("admin-app");
   const dialog = document.getElementById("post-dialog");
-  const state = { posts: [], page: 1, totalPages: 1, trashPage: 1, trashTotalPages: 1, settings: null, shareUrl: "" };
+  const state = { posts: [], page: 1, totalPages: 1, dateFilter: "", trashPage: 1, trashTotalPages: 1, settings: null, shareUrl: "" };
 
   async function request(path, options = {}) {
     const headers = { ...(options.headers || {}) };
@@ -141,30 +141,100 @@
     return actions;
   }
 
+  function postDateKey(post) {
+    const raw = String(post.publishedAt || "");
+    const sourceDate = /^(\d{4}-\d{2}-\d{2})/.exec(raw)?.[1] || "khong-ro-ngay";
+    if (!/(?:z|[+-]\d{2}:?\d{2})$/i.test(raw)) return sourceDate;
+    const parsed = new Date(raw);
+    if (!Number.isFinite(parsed.getTime())) return sourceDate;
+    const parts = Object.fromEntries(new Intl.DateTimeFormat("en-US", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      timeZone: "Asia/Ho_Chi_Minh",
+    }).formatToParts(parsed).map((part) => [part.type, part.value]));
+    return `${parts.year}-${parts.month}-${parts.day}`;
+  }
+
+  function formatPostDate(dateKey) {
+    if (dateKey === "khong-ro-ngay") return "Không rõ ngày đăng";
+    const [year, month, day] = dateKey.split("-").map(Number);
+    const label = new Intl.DateTimeFormat("vi-VN", {
+      weekday: "long",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      timeZone: "UTC",
+    }).format(new Date(Date.UTC(year, month - 1, day, 12)));
+    return label.charAt(0).toUpperCase() + label.slice(1);
+  }
+
+  function groupPostsByDate(posts) {
+    return posts.reduce((groups, post) => {
+      const dateKey = postDateKey(post);
+      const existing = groups.find((group) => group.dateKey === dateKey);
+      if (!existing) return [...groups, { dateKey, posts: [post] }];
+      return groups.map((group) => (
+        group.dateKey === dateKey ? { ...group, posts: [...group.posts, post] } : group
+      ));
+    }, []);
+  }
+
+  function createPostRow(post) {
+    const row = document.createElement("article");
+    row.className = "post-row";
+    const image = document.createElement("img"); image.src = post.coverImage || "/assets/promo-10-10.webp"; image.alt = "";
+    const body = document.createElement("div");
+    const title = document.createElement("h3"); title.textContent = post.title;
+    const text = document.createElement("p"); text.textContent = post.excerpt || post.slug;
+    body.append(title, text);
+    const [year, month, day] = postDateKey(post).split("-");
+    const time = document.createElement("time"); time.textContent = day ? `${Number(day)}/${Number(month)}/${year}` : "—";
+    row.append(image, body, time, statusBadge(post), postActions(post));
+    return row;
+  }
+
+  function createDateGroup(group) {
+    const section = document.createElement("section");
+    section.className = "post-date-group content-card";
+    const heading = document.createElement("header");
+    heading.className = "post-date-heading";
+    const title = document.createElement("h3"); title.textContent = formatPostDate(group.dateKey);
+    const count = document.createElement("span"); count.textContent = `${group.posts.length} bài`;
+    heading.append(title, count);
+    const rows = document.createElement("div");
+    rows.replaceChildren(...group.posts.map(createPostRow));
+    section.append(heading, rows);
+    return section;
+  }
+
   function renderPosts(data) {
-    state.posts = data.posts;
+    if (!state.dateFilter) state.posts = data.posts;
     state.page = data.page;
     state.totalPages = data.totalPages;
     const table = document.getElementById("posts-table");
-    table.replaceChildren(...data.posts.map((post) => {
-      const row = document.createElement("article");
-      row.className = "post-row";
-      const image = document.createElement("img"); image.src = post.coverImage || "/assets/promo-10-10.webp"; image.alt = "";
-      const body = document.createElement("div");
-      const title = document.createElement("h3"); title.textContent = post.title;
-      const text = document.createElement("p"); text.textContent = post.excerpt || post.slug;
-      body.append(title, text);
-      const time = document.createElement("time"); time.textContent = new Date(post.publishedAt).toLocaleDateString("vi-VN");
-      row.append(image, body, time, statusBadge(post), postActions(post));
-      return row;
-    }));
+    if (data.posts.length) {
+      table.replaceChildren(...groupPostsByDate(data.posts).map(createDateGroup));
+    } else {
+      const empty = document.createElement("p");
+      empty.className = "trash-empty content-card";
+      empty.textContent = state.dateFilter ? "Không có bài viết trong ngày đã chọn." : "Chưa có bài viết.";
+      table.replaceChildren(empty);
+    }
+    const summary = document.getElementById("posts-filter-summary");
+    summary.textContent = state.dateFilter
+      ? `${data.total} bài trong ngày ${formatPostDate(state.dateFilter)}.`
+      : `Đang hiển thị tất cả ${data.total} bài viết.`;
+    document.getElementById("clear-posts-date").hidden = !state.dateFilter;
     const pagination = document.getElementById("admin-pagination");
     pagination.replaceChildren();
     for (let page = Math.max(1, data.page - 2); page <= Math.min(data.totalPages, data.page + 2); page += 1) {
       const button = document.createElement("button"); button.type = "button"; button.textContent = page; button.classList.toggle("active", page === data.page); button.addEventListener("click", () => loadPosts(page)); pagination.append(button);
     }
-    refreshMetrics(data);
-    refreshPostSelect();
+    if (!state.dateFilter) {
+      refreshMetrics(data);
+      refreshPostSelect();
+    }
   }
 
   function refreshMetrics(data) {
@@ -182,8 +252,17 @@
   }
 
   async function loadPosts(page = 1) {
-    const data = await request(`/api/admin/posts?page=${page}&limit=20`);
+    const requestedDate = state.dateFilter;
+    const searchParams = new URLSearchParams({ page: String(page), limit: "20" });
+    if (requestedDate) searchParams.set("date", requestedDate);
+    const data = await request(`/api/admin/posts?${searchParams}`);
+    if (requestedDate !== state.dateFilter) return;
     renderPosts(data);
+  }
+
+  async function applyPostDateFilter(value) {
+    state.dateFilter = value;
+    await loadPosts(1);
   }
 
   function trashActions(post) {
@@ -500,6 +579,13 @@
   document.getElementById("cancel-post").addEventListener("click", () => dialog.close());
   document.getElementById("post-form").addEventListener("submit", savePost);
   document.getElementById("delete-post").addEventListener("click", deleteCurrentPost);
+  document.getElementById("posts-date-filter").addEventListener("change", (event) => {
+    applyPostDateFilter(event.target.value).catch((error) => toast(error.message));
+  });
+  document.getElementById("clear-posts-date").addEventListener("click", () => {
+    document.getElementById("posts-date-filter").value = "";
+    applyPostDateFilter("").catch((error) => toast(error.message));
+  });
   document.getElementById("crawl-form").addEventListener("submit", runCrawl);
   document.querySelectorAll('input[name="crawl-mode"]').forEach((input) => input.addEventListener("change", setCrawlMode));
   document.getElementById("settings-form").addEventListener("submit", saveSettings);
