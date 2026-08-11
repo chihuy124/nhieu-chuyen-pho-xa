@@ -2,6 +2,7 @@
   const WORDPRESS_SOURCES = new Set([
     "https://nhieuchuyenduongpho.com",
     "https://honghotduong.com",
+    "https://hongbienpro.com",
   ]);
   const loginScreen = document.getElementById("login-screen");
   const app = document.getElementById("admin-app");

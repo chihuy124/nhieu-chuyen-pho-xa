@@ -283,3 +283,44 @@ test("crawl endpoint accepts the allowlisted Hóng Hớt Đường source", asyn
   assert.equal(parsed(crawlRes).data.processed, 1);
   assert.deepEqual(parsed(crawlRes).data.errors, []);
 });
+
+test("crawl endpoint imports Hongbienpro content and skips redirect wrappers", async () => {
+  process.env.ADMIN_PASSWORD = "hongbien-crawl-password";
+  process.env.ADMIN_SESSION_SECRET = "hongbien-crawl-secret-that-is-long-enough";
+  const token = require("../lib/auth").createSessionToken(process.env.ADMIN_SESSION_SECRET);
+  const cookie = `admin_session=${token}`;
+  const targetUrl = "https://hongbienpro.com/2026/08/11/bai-noi-dung-that/";
+  const crawlRes = response();
+  await crawlHandler(request("POST", {
+    cookie,
+    mutation: true,
+    body: {
+      sourceOrigin: "https://hongbienpro.com",
+      fromDate: "2026-08-11",
+      toDate: "2026-08-11",
+      page: 1,
+      total: 2,
+      totalPages: 1,
+      items: [{
+        id: 20460,
+        slug: "trang-chuyen-tiep",
+        link: "https://hongbienpro.com/2026/08/11/trang-chuyen-tiep/",
+        date: "2026-08-11T20:10:07",
+        title: { rendered: "Trang chuyển tiếp" },
+        content: { rendered: `<!DOCTYPE html><script>const redirectURL = "${targetUrl}";</script>` },
+      }, {
+        id: 20459,
+        slug: "bai-noi-dung-that",
+        link: targetUrl,
+        date: "2026-08-11T20:09:37",
+        modified: "2026-08-11T20:09:38",
+        title: { rendered: "Bài nội dung thật" },
+        excerpt: { rendered: "<p>Mô tả</p>" },
+        content: { rendered: '<video src="https://cdn.videy.co/Rb5LRlm71.mp4"></video>' },
+      }],
+    },
+  }), crawlRes);
+  assert.equal(crawlRes.statusCode, 200);
+  assert.equal(parsed(crawlRes).data.processed, 1);
+  assert.deepEqual(parsed(crawlRes).data.errors, []);
+});

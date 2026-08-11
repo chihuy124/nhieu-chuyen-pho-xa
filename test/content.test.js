@@ -1,7 +1,11 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 
-const { normalizeWordPressPost, sanitizeArticleHtml } = require("../lib/content");
+const {
+  getWordPressRedirectTarget,
+  normalizeWordPressPost,
+  sanitizeArticleHtml,
+} = require("../lib/content");
 
 test("WordPress post normalization extracts video and embedded media", () => {
   const post = normalizeWordPressPost({
@@ -59,4 +63,27 @@ test("WordPress IDs are namespaced for the Hóng Hớt Đường source", () => 
   });
   assert.equal(post.id, "wp-honghotduong-com-30256");
   assert.deepEqual(post.videos, ["https://cdn.videy.co/V6P4o2LX1.mp4"]);
+});
+
+test("Hongbienpro posts use a source namespace and redirect wrappers are detected safely", () => {
+  const targetUrl = "https://hongbienpro.com/2026/08/11/bai-noi-dung-that/";
+  const wrapper = {
+    id: 20460,
+    slug: "nhan-vien-3",
+    link: "https://hongbienpro.com/2026/08/11/nhan-vien-3/",
+    date: "2026-08-11T20:10:07",
+    title: { rendered: "Nhân viên…" },
+    content: { rendered: `<!DOCTYPE html><script>const redirectURL = "${targetUrl}";</script><button onclick="redirectToURL()">TIẾP TỤC XEM</button>` },
+  };
+  const post = normalizeWordPressPost(wrapper);
+  assert.equal(post.id, "wp-hongbienpro-com-20460");
+  assert.equal(getWordPressRedirectTarget(wrapper), targetUrl);
+  assert.equal(getWordPressRedirectTarget({
+    ...wrapper,
+    content: { rendered: '<script>const redirectURL = "https://evil.example/phishing";</script>' },
+  }), "");
+  assert.equal(getWordPressRedirectTarget({
+    ...wrapper,
+    content: { rendered: '<p>const redirectURL = "https://hongbienpro.com/not-a-wrapper";</p>' },
+  }), "");
 });

@@ -21,7 +21,7 @@ test("admin settings do not expose or submit an editable logo URL", () => {
   assert.match(script, /promoOrder/);
   assert.match(html, /setting-fanpage/);
   assert.match(script, /fanpageUrl/);
-  assert.match(html, /admin\.js\?v=9/);
+  assert.match(html, /admin\.js\?v=10/);
 });
 
 test("in-app escape script uses the configured external browser target", () => {
@@ -37,7 +37,7 @@ test("post row action menu can copy the full article permalink", () => {
   assert.match(script, /navigator\.clipboard/);
   assert.match(script, /post\.permalink/);
   assert.match(script, /aria-haspopup/);
-  assert.match(html, /admin\.js\?v=9/);
+  assert.match(html, /admin\.js\?v=10/);
 });
 
 test("crawl form defaults to one day and can switch to a date range", () => {
@@ -56,11 +56,14 @@ test("crawl form defaults to one day and can switch to a date range", () => {
   assert.match(html, /id="crawl-source"/);
   assert.match(html, /value="https:\/\/nhieuchuyenduongpho\.com"/);
   assert.match(html, /value="https:\/\/honghotduong\.com"/);
+  assert.match(html, /value="https:\/\/hongbienpro\.com"/);
+  assert.match(html, />Hóng Biến Pro</);
   assert.match(script, /sourceOrigin/);
   assert.match(script, /document\.getElementById\("crawl-source"\)\.value/);
   assert.match(script, /fetchWordPressSource/);
   assert.match(script, /retry-after/);
   assert.match(script, /sourceResponse\.status >= 500/);
+  assert.match(html, /admin\.js\?v=10/);
 });
 
 test("article promo script respects configured order and schedules the second popup after returning", () => {

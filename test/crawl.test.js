@@ -74,18 +74,27 @@ test("WordPress URL is fixed to the configured source and paginated", () => {
   assert.equal(url.searchParams.get("_embed"), "1");
 });
 
-test("WordPress source allowlist accepts Hóng Hớt Đường and rejects SSRF targets", () => {
+test("WordPress source allowlist accepts configured sources and rejects SSRF targets", () => {
   assert.equal(normalizeWordPressSourceOrigin(), "https://nhieuchuyenduongpho.com");
   assert.equal(normalizeWordPressSourceOrigin("https://honghotduong.com"), "https://honghotduong.com");
   assert.equal(normalizeWordPressSourceOrigin("https://honghotduong.com/"), "https://honghotduong.com");
+  assert.equal(normalizeWordPressSourceOrigin("https://hongbienpro.com"), "https://hongbienpro.com");
+  assert.equal(normalizeWordPressSourceOrigin("https://hongbienpro.com/"), "https://hongbienpro.com");
   assert.throws(() => normalizeWordPressSourceOrigin("https://evil.example"), /Nguồn WordPress/);
   assert.throws(() => normalizeWordPressSourceOrigin("https://honghotduong.com.evil.example"), /Nguồn WordPress/);
+  assert.throws(() => normalizeWordPressSourceOrigin("https://hongbienpro.com.evil.example"), /Nguồn WordPress/);
   const url = new URL(buildWordPressPostsUrl({
     sourceOrigin: "https://honghotduong.com",
     after: "2026-08-09T00:00:00",
     before: "2026-08-09T23:59:59",
   }));
   assert.equal(url.origin, "https://honghotduong.com");
+  const hongBienUrl = new URL(buildWordPressPostsUrl({
+    sourceOrigin: "https://hongbienpro.com",
+    after: "2026-08-11T00:00:00",
+    before: "2026-08-11T23:59:59",
+  }));
+  assert.equal(hongBienUrl.origin, "https://hongbienpro.com");
 });
 
 test("crawl page parsing rejects invalid values", () => {
@@ -124,4 +133,7 @@ test("client crawl batches are bounded to the configured source and date range",
   const hongHotPost = { id: 30256, date: "2026-08-08T09:00:00", link: "https://honghotduong.com/2026/08/08/chiec-xe/" };
   assert.deepEqual(validateClientWordPressBatch([hongHotPost], range, "https://honghotduong.com"), [hongHotPost]);
   assert.throws(() => validateClientWordPressBatch([hongHotPost], range), /không thuộc nguồn/);
+  const hongBienPost = { id: 20459, date: "2026-08-08T09:00:00", link: "https://hongbienpro.com/2026/08/08/bai-viet/" };
+  assert.deepEqual(validateClientWordPressBatch([hongBienPost], range, "https://hongbienpro.com"), [hongBienPost]);
+  assert.throws(() => validateClientWordPressBatch([hongBienPost], range), /không thuộc nguồn/);
 });
