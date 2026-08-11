@@ -7,7 +7,7 @@
   const loginScreen = document.getElementById("login-screen");
   const app = document.getElementById("admin-app");
   const dialog = document.getElementById("post-dialog");
-  const state = { posts: [], page: 1, totalPages: 1, settings: null, shareUrl: "" };
+  const state = { posts: [], page: 1, totalPages: 1, trashPage: 1, trashTotalPages: 1, settings: null, shareUrl: "" };
 
   async function request(path, options = {}) {
     const headers = { ...(options.headers || {}) };
@@ -33,6 +33,7 @@
     const active = document.querySelector(`.nav-item[data-section="${name}"]`);
     document.getElementById("section-title").textContent = active?.textContent || "Tổng quan";
     document.querySelector(".sidebar").classList.remove("open");
+    if (name === "trash") loadTrash(state.trashPage).catch((error) => toast(error.message));
   }
 
   function statusBadge(post) {
@@ -118,7 +119,16 @@
     edit.setAttribute("role", "menuitem");
     edit.textContent = "Chỉnh sửa bài viết";
     edit.addEventListener("click", () => { closePostMenus(); openEditor(post); });
-    menu.append(copy, edit);
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "menu-danger";
+    remove.setAttribute("role", "menuitem");
+    remove.textContent = "Chuyển vào thùng rác";
+    remove.addEventListener("click", () => {
+      closePostMenus();
+      movePostToTrash(post.id).catch((error) => toast(error.message));
+    });
+    menu.append(copy, edit, remove);
     toggle.addEventListener("click", (event) => {
       event.stopPropagation();
       const willOpen = menu.hidden;
@@ -176,6 +186,88 @@
     renderPosts(data);
   }
 
+  function trashActions(post) {
+    const actions = document.createElement("div");
+    actions.className = "trash-actions";
+    const restore = document.createElement("button");
+    restore.type = "button";
+    restore.className = "secondary-button compact-action";
+    restore.textContent = "Khôi phục";
+    restore.addEventListener("click", () => restoreTrashedPost(post.id));
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "danger-button compact-action";
+    remove.textContent = "Xóa vĩnh viễn";
+    remove.addEventListener("click", () => permanentlyDeletePost(post.id));
+    actions.append(restore, remove);
+    return actions;
+  }
+
+  function renderTrash(data) {
+    state.trashPage = data.page;
+    state.trashTotalPages = data.totalPages;
+    const table = document.getElementById("trash-table");
+    if (!data.posts.length) {
+      const empty = document.createElement("p");
+      empty.className = "trash-empty";
+      empty.textContent = "Thùng rác đang trống.";
+      table.replaceChildren(empty);
+    } else {
+      table.replaceChildren(...data.posts.map((post) => {
+        const row = document.createElement("article");
+        row.className = "post-row trash-row";
+        const image = document.createElement("img"); image.src = post.coverImage || "/assets/promo-10-10.webp"; image.alt = "";
+        const body = document.createElement("div");
+        const title = document.createElement("h3"); title.textContent = post.title;
+        const text = document.createElement("p"); text.textContent = post.excerpt || post.slug;
+        body.append(title, text);
+        const time = document.createElement("time"); time.textContent = `Đã xoá ${new Date(post.deletedAt).toLocaleDateString("vi-VN")}`;
+        row.append(image, body, time, trashActions(post));
+        return row;
+      }));
+    }
+    const pagination = document.getElementById("trash-pagination");
+    pagination.replaceChildren();
+    for (let page = Math.max(1, data.page - 2); page <= Math.min(data.totalPages, data.page + 2); page += 1) {
+      const button = document.createElement("button"); button.type = "button"; button.textContent = page; button.classList.toggle("active", page === data.page); button.addEventListener("click", () => loadTrash(page)); pagination.append(button);
+    }
+  }
+
+  async function loadTrash(page = 1) {
+    const data = await request(`/api/admin/posts?trash=1&page=${page}&limit=20`);
+    renderTrash(data);
+  }
+
+  async function movePostToTrash(id, closeDialog = false) {
+    if (!id || !confirm("Chuyển bài viết này vào thùng rác?")) return false;
+    await request(`/api/admin/post?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+    if (closeDialog) dialog.close();
+    await Promise.all([loadPosts(1), loadTrash(1)]);
+    toast("Đã chuyển bài viết vào thùng rác");
+    return true;
+  }
+
+  async function restoreTrashedPost(id) {
+    try {
+      await request(`/api/admin/post?id=${encodeURIComponent(id)}`, {
+        method: "PATCH",
+        body: JSON.stringify({ operation: "restore" }),
+      });
+      await Promise.all([loadTrash(state.trashPage), loadPosts(1)]);
+      toast("Đã khôi phục bài viết");
+    } catch (error) { toast(error.message); }
+  }
+
+  async function permanentlyDeletePost(id) {
+    if (!confirm("Xóa vĩnh viễn bài viết này?")) return;
+    if (!confirm("Thao tác này không thể hoàn tác. Bạn chắc chắn muốn tiếp tục?")) return;
+    try {
+      await request(`/api/admin/post?id=${encodeURIComponent(id)}&permanent=1`, { method: "DELETE" });
+      await loadTrash(state.trashPage);
+      toast("Đã xóa vĩnh viễn bài viết");
+    } catch (error) { toast(error.message); }
+  }
+
   function localDateTime(value) {
     const date = value ? new Date(value) : new Date();
     const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
@@ -221,8 +313,7 @@
 
   async function deleteCurrentPost() {
     const id = document.getElementById("post-id").value;
-    if (!id || !confirm("Xóa bài viết này? Thao tác không thể hoàn tác.")) return;
-    try { await request(`/api/admin/post?id=${encodeURIComponent(id)}`, { method: "DELETE" }); dialog.close(); await loadPosts(1); toast("Đã xóa bài viết"); } catch (error) { document.getElementById("post-error").textContent = error.message; }
+    try { await movePostToTrash(id, true); } catch (error) { document.getElementById("post-error").textContent = error.message; }
   }
 
   function setCrawlMode() {

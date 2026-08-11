@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 
 const loginHandler = require("../lib/api-admin/login");
 const crawlHandler = require("../lib/api-admin/crawl");
+const postHandler = require("../lib/api-admin/post");
 const postsHandler = require("../lib/api-admin/posts");
 const publicPostHandler = require("../lib/api-content/post");
 const publicPageHandler = require("../lib/api-content/page");
@@ -355,6 +356,100 @@ test("legacy encoded article slugs render the canonical single-encoded URL", asy
       assert.match(pageRes.body, /\/2026\/08\/11\/%E2%9D%97%EF%B8%8Fngay-luc-nay-%F0%9F%99%8F\//);
       assert.doesNotMatch(pageRes.body, /%25e2/i);
     }
+  } finally {
+    await deletePost(id);
+  }
+});
+
+test("admin can move posts to trash, restore them, and permanently delete only from trash", async () => {
+  process.env.ADMIN_PASSWORD = "trash-password";
+  process.env.ADMIN_SESSION_SECRET = "trash-secret-that-is-long-enough";
+  const token = require("../lib/auth").createSessionToken(process.env.ADMIN_SESSION_SECRET);
+  const cookie = `admin_session=${token}`;
+  const id = `trash-api-${Date.now()}`;
+  const slug = `trash-api-${Date.now()}`;
+  await savePost({
+    id,
+    slug,
+    title: "Bài kiểm thử thùng rác",
+    excerpt: "",
+    contentHtml: "<p>Nội dung</p>",
+    videos: [],
+    status: "published",
+    publishedAt: "2026-08-11T15:00:00.000Z",
+  });
+
+  try {
+    const invalidOperationRes = response();
+    await postHandler(request("PATCH", {
+      cookie,
+      mutation: true,
+      query: { id },
+      body: { operation: "unknown" },
+    }), invalidOperationRes);
+    assert.equal(invalidOperationRes.statusCode, 422);
+
+    const restoreActiveRes = response();
+    await postHandler(request("PATCH", {
+      cookie,
+      mutation: true,
+      query: { id },
+      body: { operation: "restore" },
+    }), restoreActiveRes);
+    assert.equal(restoreActiveRes.statusCode, 409);
+
+    const unsafePermanentRes = response();
+    await postHandler(request("DELETE", { cookie, mutation: true, query: { id, permanent: "1" } }), unsafePermanentRes);
+    assert.equal(unsafePermanentRes.statusCode, 409);
+
+    const trashRes = response();
+    await postHandler(request("DELETE", { cookie, mutation: true, query: { id } }), trashRes);
+    assert.equal(trashRes.statusCode, 200);
+    assert.ok(parsed(trashRes).data.deletedAt);
+
+    const editTrashedRes = response();
+    await postHandler(request("PUT", {
+      cookie,
+      mutation: true,
+      query: { id },
+      body: { title: "Không được cập nhật" },
+    }), editTrashedRes);
+    assert.equal(editTrashedRes.statusCode, 409);
+
+    const publicMissingRes = response();
+    await publicPostHandler(request("GET", { query: { slug } }), publicMissingRes);
+    assert.equal(publicMissingRes.statusCode, 404);
+
+    const activeRes = response();
+    await postsHandler(request("GET", { cookie, query: { page: 1, limit: 50 } }), activeRes);
+    assert.equal(parsed(activeRes).data.posts.some((post) => post.id === id), false);
+
+    const trashListRes = response();
+    await postsHandler(request("GET", { cookie, query: { page: 1, limit: 50, trash: "1" } }), trashListRes);
+    assert.equal(parsed(trashListRes).data.posts.some((post) => post.id === id), true);
+
+    const restoreRes = response();
+    await postHandler(request("PATCH", {
+      cookie,
+      mutation: true,
+      query: { id },
+      body: { operation: "restore" },
+    }), restoreRes);
+    assert.equal(restoreRes.statusCode, 200);
+    assert.equal(parsed(restoreRes).data.deletedAt, undefined);
+
+    const publicRestoredRes = response();
+    await publicPostHandler(request("GET", { query: { slug } }), publicRestoredRes);
+    assert.equal(publicRestoredRes.statusCode, 200);
+
+    await postHandler(request("DELETE", { cookie, mutation: true, query: { id } }), response());
+    const permanentRes = response();
+    await postHandler(request("DELETE", { cookie, mutation: true, query: { id, permanent: "1" } }), permanentRes);
+    assert.equal(permanentRes.statusCode, 200);
+
+    const missingRes = response();
+    await postHandler(request("GET", { cookie, query: { id } }), missingRes);
+    assert.equal(missingRes.statusCode, 404);
   } finally {
     await deletePost(id);
   }

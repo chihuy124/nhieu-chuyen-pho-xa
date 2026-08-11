@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/admin/admin.css?v=3" />
+  <link rel="stylesheet" href="/admin/admin.css?v=4" />
 </head>
 <body>
   <main id="login-screen" class="login-screen">
@@ -31,6 +31,7 @@
       <nav class="admin-nav" aria-label="Điều hướng quản trị">
         <button class="nav-item active" data-section="overview">Tổng quan</button>
         <button class="nav-item" data-section="posts">Bài viết &amp; video</button>
+        <button class="nav-item" data-section="trash">Thùng rác</button>
         <button class="nav-item" data-section="crawl">Crawl nội dung</button>
         <button class="nav-item" data-section="links">Link Facebook</button>
         <button class="nav-item" data-section="settings">Cấu hình website</button>
@@ -68,6 +69,16 @@
         <div class="content-card table-card">
           <div id="posts-table" class="posts-table" aria-live="polite"></div>
           <nav id="admin-pagination" class="admin-pagination" aria-label="Phân trang bài viết"></nav>
+        </div>
+      </section>
+
+      <section class="admin-content section-panel" data-panel="trash" hidden>
+        <div class="toolbar">
+          <div><p class="eyebrow">Nội dung đã xoá</p><h2>Thùng rác</h2><p class="muted trash-description">Các bài tại đây không hiển thị ngoài website và không bị crawler tự khôi phục.</p></div>
+        </div>
+        <div class="content-card table-card">
+          <div id="trash-table" class="posts-table" aria-live="polite"></div>
+          <nav id="trash-pagination" class="admin-pagination" aria-label="Phân trang thùng rác"></nav>
         </div>
       </section>
 
@@ -179,12 +190,12 @@
           <label>Trạng thái<select id="post-status"><option value="draft">Bản nháp</option><option value="published">Đã xuất bản</option></select></label>
         </div>
       </div>
-      <footer><button id="delete-post" class="danger-button" type="button" hidden>Xóa bài</button><span></span><button id="cancel-post" class="secondary-button" type="button">Hủy</button><button class="primary-button" type="submit">Lưu bài viết</button></footer>
+      <footer><button id="delete-post" class="danger-button" type="button" hidden>Chuyển vào thùng rác</button><span></span><button id="cancel-post" class="secondary-button" type="button">Hủy</button><button class="primary-button" type="submit">Lưu bài viết</button></footer>
       <p id="post-error" class="form-error" role="alert"></p>
     </form>
   </dialog>
 
   <div id="toast" class="toast" role="status" hidden></div>
-  <script src="/admin/admin.js?v=10" defer></script>
+  <script src="/admin/admin.js?v=11" defer></script>
 </body>
 </html>

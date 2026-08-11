@@ -2,7 +2,18 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 
 const { createMemoryKv } = require("../lib/kv");
-const { DEFAULT_SETTINGS, deletePost, getPostBySlug, getSettings, listPosts, savePost, saveSettings } = require("../lib/content-store");
+const {
+  DEFAULT_SETTINGS,
+  deletePost,
+  getPost,
+  getPostBySlug,
+  getSettings,
+  listPosts,
+  restorePost,
+  savePost,
+  saveSettings,
+  trashPost,
+} = require("../lib/content-store");
 
 function post(id, slug, status, publishedAt) {
   return { id, slug, title: slug, status, publishedAt, videos: [] };
@@ -59,4 +70,44 @@ test("legacy double-encoded WordPress slugs resolve through old and canonical UR
 
   assert.equal(await deletePost("wp-hongbienpro-com-20443", client), true);
   assert.equal(await client.get(`content:slug:${encodedSlug}`), null);
+});
+
+test("soft-deleted posts stay hidden during recrawl, can be restored, and can be permanently deleted", async () => {
+  const client = createMemoryKv();
+  const original = await savePost(post("trash-1", "trash-lifecycle", "published", "2026-08-11T08:00:00Z"), client);
+
+  assert.equal(await trashPost("missing", client), null);
+  assert.equal(await restorePost("missing", client), null);
+  assert.equal((await restorePost(original.id, client)).id, original.id);
+
+  const trashed = await trashPost(original.id, client);
+  assert.equal((await trashPost(original.id, client)).deletedAt, trashed.deletedAt);
+  assert.equal(trashed.id, original.id);
+  assert.ok(Number.isFinite(Date.parse(trashed.deletedAt)));
+  assert.equal(await getPostBySlug(original.slug, client), null);
+  assert.deepEqual((await listPosts({ page: 1, limit: 10 }, client)).posts, []);
+  assert.deepEqual((await listPosts({ page: 1, limit: 10, publishedOnly: true }, client)).posts, []);
+  assert.deepEqual((await listPosts({ page: 1, limit: 10, trashedOnly: true }, client)).posts.map((item) => item.id), [original.id]);
+
+  const recrawled = await savePost({ ...original, title: "Crawler cập nhật lại" }, client);
+  assert.equal(recrawled.deletedAt, trashed.deletedAt);
+  assert.equal(await getPostBySlug(original.slug, client), null);
+  assert.deepEqual((await listPosts({ page: 1, limit: 10 }, client)).posts, []);
+  assert.equal((await listPosts({ page: 1, limit: 10, trashedOnly: true }, client)).posts[0].title, "Crawler cập nhật lại");
+
+  const restored = await restorePost(original.id, client);
+  assert.equal(restored.deletedAt, undefined);
+  assert.equal((await getPostBySlug(original.slug, client)).id, original.id);
+  assert.deepEqual((await listPosts({ page: 1, limit: 10 }, client)).posts.map((item) => item.id), [original.id]);
+
+  await trashPost(original.id, client);
+  assert.equal(await deletePost(original.id, client), true);
+  assert.equal(await getPost(original.id, client), null);
+  assert.deepEqual((await listPosts({ page: 1, limit: 10, trashedOnly: true }, client)).posts, []);
+  await assert.doesNotReject(savePost(post("trash-2", original.slug, "published", "2026-08-12T08:00:00Z"), client));
+
+  const draft = await savePost(post("trash-draft", "trash-draft", "draft", "invalid-date"), client);
+  await trashPost(draft.id, client);
+  await restorePost(draft.id, client);
+  assert.equal((await listPosts({ page: 1, limit: 10, publishedOnly: true }, client)).posts.some((item) => item.id === draft.id), false);
 });

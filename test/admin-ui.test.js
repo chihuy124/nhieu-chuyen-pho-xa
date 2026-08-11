@@ -21,7 +21,7 @@ test("admin settings do not expose or submit an editable logo URL", () => {
   assert.match(script, /promoOrder/);
   assert.match(html, /setting-fanpage/);
   assert.match(script, /fanpageUrl/);
-  assert.match(html, /admin\.js\?v=10/);
+  assert.match(html, /admin\.js\?v=11/);
 });
 
 test("in-app escape script uses the configured external browser target", () => {
@@ -37,7 +37,7 @@ test("post row action menu can copy the full article permalink", () => {
   assert.match(script, /navigator\.clipboard/);
   assert.match(script, /post\.permalink/);
   assert.match(script, /aria-haspopup/);
-  assert.match(html, /admin\.js\?v=10/);
+  assert.match(html, /admin\.js\?v=11/);
 });
 
 test("crawl form defaults to one day and can switch to a date range", () => {
@@ -63,7 +63,24 @@ test("crawl form defaults to one day and can switch to a date range", () => {
   assert.match(script, /fetchWordPressSource/);
   assert.match(script, /retry-after/);
   assert.match(script, /sourceResponse\.status >= 500/);
-  assert.match(html, /admin\.js\?v=10/);
+  assert.match(html, /admin\.js\?v=11/);
+});
+
+test("admin post library exposes a soft-delete trash workflow", () => {
+  const root = path.join(__dirname, "..");
+  const html = fs.readFileSync(path.join(root, "admin", "index.html"), "utf8");
+  const script = fs.readFileSync(path.join(root, "admin", "admin.js"), "utf8");
+  assert.match(html, /data-section="trash"/);
+  assert.match(html, /data-panel="trash"/);
+  assert.match(html, /id="trash-table"/);
+  assert.match(html, />Thùng rác</);
+  assert.match(script, /Chuyển vào thùng rác/);
+  assert.match(script, /Khôi phục/);
+  assert.match(script, /Xóa vĩnh viễn/);
+  assert.match(script, /trash=1/);
+  assert.match(script, /operation:\s*"restore"/);
+  assert.match(script, /permanent=1/);
+  assert.match(script, /confirm\("Xóa vĩnh viễn/);
 });
 
 test("article promo script respects configured order and schedules the second popup after returning", () => {
