@@ -135,7 +135,7 @@ test("admin CRUD to public article and Facebook shim promo flow", async () => {
     ...DEFAULT_SETTINGS,
     shopeeEnabled: true,
     shopeeImageUrl: "https://cdn.example.com/shopee-banner.webp",
-    shopeeUrl: "https://s.shopee.vn/AbCd12",
+    shopeeUrl: "https://vt.tiktok.com/AbCd12",
     promoOrder: "shopee-first",
   });
   const shopeePromoRes = response();
@@ -143,7 +143,7 @@ test("admin CRUD to public article and Facebook shim promo flow", async () => {
   assert.deepEqual(parsed(shopeePromoRes).data.followUp, {
     enabled: true,
     imageUrl: "https://cdn.example.com/shopee-banner.webp",
-    targetUrl: "https://s.shopee.vn/AbCd12",
+    targetUrl: "https://vt.tiktok.com/AbCd12",
     delayMs: 1000,
   });
   assert.equal(parsed(shopeePromoRes).data.promoOrder, "shopee-first");

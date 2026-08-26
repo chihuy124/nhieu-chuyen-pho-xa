@@ -95,16 +95,17 @@ test("validators reject unsafe values and normalize immutable post copies", () =
   const shopeeSettings = validateSettingsInput({
     shopeeEnabled: true,
     shopeeImageUrl: "/assets/shopee-banner.webp",
-    shopeeUrl: "https://s.shopee.vn/AbCd12",
+    shopeeUrl: "https://vt.tiktok.com/AbCd12",
     promoOrder: "shopee-first",
   }, DEFAULT_SETTINGS);
   assert.equal(shopeeSettings.shopeeEnabled, true);
   assert.equal(shopeeSettings.shopeeImageUrl, "/assets/shopee-banner.webp");
-  assert.equal(shopeeSettings.shopeeUrl, "https://s.shopee.vn/AbCd12");
+  assert.equal(shopeeSettings.shopeeUrl, "https://vt.tiktok.com/AbCd12");
   assert.equal(shopeeSettings.promoOrder, "shopee-first");
   assert.throws(() => validateSettingsInput({ promoOrder: "random-first" }, DEFAULT_SETTINGS), /Thứ tự popup/);
-  assert.throws(() => validateSettingsInput({ shopeeEnabled: true, shopeeImageUrl: "", shopeeUrl: "" }, DEFAULT_SETTINGS), /Shopee/);
-  assert.throws(() => validateSettingsInput({ shopeeEnabled: true, shopeeImageUrl: "/banner.webp", shopeeUrl: "https://evil.example" }, DEFAULT_SETTINGS), /Shopee/);
+  assert.throws(() => validateSettingsInput({ shopeeEnabled: true, shopeeImageUrl: "", shopeeUrl: "" }, DEFAULT_SETTINGS), /TikTok/);
+  assert.throws(() => validateSettingsInput({ shopeeEnabled: true, shopeeImageUrl: "/banner.webp", shopeeUrl: "https://evil.example" }, DEFAULT_SETTINGS), /TikTok/);
+  assert.throws(() => validateSettingsInput({ shopeeUrl: "https://s.shopee.vn/AbCd12" }, DEFAULT_SETTINGS), /TikTok/);
 });
 
 test("API error paths and legacy shim behavior are safe", async () => {
