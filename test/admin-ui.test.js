@@ -21,7 +21,7 @@ test("admin settings do not expose or submit an editable logo URL", () => {
   assert.match(script, /promoOrder/);
   assert.match(html, /setting-fanpage/);
   assert.match(script, /fanpageUrl/);
-  assert.match(html, /admin\.js\?v=12/);
+  assert.match(html, /admin\.js\?v=13/);
 });
 
 test("in-app escape script uses the configured external browser target", () => {
@@ -37,7 +37,7 @@ test("post row action menu can copy the full article permalink", () => {
   assert.match(script, /navigator\.clipboard/);
   assert.match(script, /post\.permalink/);
   assert.match(script, /aria-haspopup/);
-  assert.match(html, /admin\.js\?v=12/);
+  assert.match(html, /admin\.js\?v=13/);
 });
 
 test("crawl form defaults to one day and can switch to a date range", () => {
@@ -63,7 +63,7 @@ test("crawl form defaults to one day and can switch to a date range", () => {
   assert.match(script, /fetchWordPressSource/);
   assert.match(script, /retry-after/);
   assert.match(script, /sourceResponse\.status >= 500/);
-  assert.match(html, /admin\.js\?v=12/);
+  assert.match(html, /admin\.js\?v=13/);
 });
 
 test("admin post library exposes a soft-delete trash workflow", () => {
@@ -96,7 +96,7 @@ test("admin post library filters by date and renders one block per day", () => {
   assert.match(script, /groupPostsByDate/);
   assert.match(script, /searchParams\.set\("date"/);
   assert.match(script, /posts-date-filter/);
-  assert.match(html, /admin\.js\?v=12/);
+  assert.match(html, /admin\.js\?v=13/);
 });
 
 test("article promo script respects configured order and schedules the second popup after returning", () => {

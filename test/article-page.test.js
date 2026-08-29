@@ -86,7 +86,7 @@ test("article page falls back to site metadata and avoids duplicate embedded vid
   assert.match(html, /description" content="Mô tả site/);
   assert.equal((html.match(/inside\.mp4/g) || []).length, 1);
   assert.match(html, /<video[^>]*preload="auto"/);
-  assert.match(html, /post\.js\?v=7/);
+  assert.match(html, /post\.js\?v=8/);
   assert.match(html, /<img id="promo-image" alt="Khuyến mãi đặc biệt"/);
   assert.doesNotMatch(html, /id="promo-image" src=/);
   assert.doesNotMatch(html, /article-cover/);

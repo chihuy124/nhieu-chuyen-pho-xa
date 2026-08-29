@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/admin/admin.css?v=5" />
+  <link rel="stylesheet" href="/admin/admin.css?v=6" />
 </head>
 <body>
   <main id="login-screen" class="login-screen">
@@ -32,6 +32,7 @@
         <button class="nav-item active" data-section="overview">Tổng quan</button>
         <button class="nav-item" data-section="posts">Bài viết &amp; video</button>
         <button class="nav-item" data-section="trash">Thùng rác</button>
+        <button class="nav-item" data-section="clicks">Click banner</button>
         <button class="nav-item" data-section="crawl">Crawl nội dung</button>
         <button class="nav-item" data-section="links">Link Facebook</button>
         <button class="nav-item" data-section="settings">Cấu hình website</button>
@@ -82,6 +83,33 @@
         <div class="content-card table-card">
           <div id="trash-table" class="posts-table" aria-live="polite"></div>
           <nav id="trash-pagination" class="admin-pagination" aria-label="Phân trang thùng rác"></nav>
+        </div>
+      </section>
+
+      <section class="admin-content section-panel" data-panel="clicks" hidden>
+        <div class="toolbar">
+          <div><p class="eyebrow">Hiệu quả quảng cáo</p><h2>Click banner theo ngày</h2></div>
+        </div>
+        <div class="content-card posts-filter-bar">
+          <label>Khoảng thời gian
+            <select id="clicks-range">
+              <option value="7">7 ngày gần nhất</option>
+              <option value="14" selected>14 ngày gần nhất</option>
+              <option value="30">30 ngày gần nhất</option>
+              <option value="90">90 ngày gần nhất</option>
+            </select>
+          </label>
+          <label>Xem một ngày<input id="clicks-date" type="date" /></label>
+          <button id="clear-clicks-date" class="secondary-button" type="button" hidden>Xem theo khoảng ngày</button>
+        </div>
+        <div class="metric-grid">
+          <article class="metric-card"><span>Banner 1</span><strong id="metric-clicks-banner1">—</strong><small>Click trong khoảng đang xem</small></article>
+          <article class="metric-card"><span>Banner 2</span><strong id="metric-clicks-banner2">—</strong><small>Click trong khoảng đang xem</small></article>
+          <article class="metric-card accent"><span>Tổng click</span><strong id="metric-clicks-total">—</strong><small>Cả hai banner</small></article>
+        </div>
+        <div class="content-card table-card">
+          <div class="click-row click-head"><span>Ngày</span><span>Banner 1</span><span>Banner 2</span><span>Tổng</span></div>
+          <div id="clicks-table" class="posts-table" aria-live="polite"></div>
         </div>
       </section>
 
@@ -199,6 +227,6 @@
   </dialog>
 
   <div id="toast" class="toast" role="status" hidden></div>
-  <script src="/admin/admin.js?v=12" defer></script>
+  <script src="/admin/admin.js?v=13" defer></script>
 </body>
 </html>

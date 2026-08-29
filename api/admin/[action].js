@@ -6,6 +6,7 @@ module.exports = createRouteDispatcher({
   logout: require("../../lib/api-admin/logout"),
   post: require("../../lib/api-admin/post"),
   posts: require("../../lib/api-admin/posts"),
+  "promo-clicks": require("../../lib/api-admin/promo-clicks"),
   session: require("../../lib/api-admin/session"),
   settings: require("../../lib/api-admin/settings"),
 });

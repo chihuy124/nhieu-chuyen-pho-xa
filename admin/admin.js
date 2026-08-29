@@ -7,7 +7,7 @@
   const loginScreen = document.getElementById("login-screen");
   const app = document.getElementById("admin-app");
   const dialog = document.getElementById("post-dialog");
-  const state = { posts: [], page: 1, totalPages: 1, dateFilter: "", trashPage: 1, trashTotalPages: 1, settings: null, shareUrl: "" };
+  const state = { posts: [], page: 1, totalPages: 1, dateFilter: "", trashPage: 1, trashTotalPages: 1, settings: null, shareUrl: "", clickDate: "", clickRange: "14" };
 
   async function request(path, options = {}) {
     const headers = { ...(options.headers || {}) };
@@ -34,6 +34,7 @@
     document.getElementById("section-title").textContent = active?.textContent || "Tổng quan";
     document.querySelector(".sidebar").classList.remove("open");
     if (name === "trash") loadTrash(state.trashPage).catch((error) => toast(error.message));
+    if (name === "clicks") loadPromoClicks().catch((error) => toast(error.message));
   }
 
   function statusBadge(post) {
@@ -347,6 +348,47 @@
     } catch (error) { toast(error.message); }
   }
 
+  function createClickRow(day) {
+    const row = document.createElement("div");
+    row.className = "click-row";
+    const date = document.createElement("span");
+    date.className = "click-date";
+    date.textContent = formatPostDate(day.date);
+    const banner1 = document.createElement("strong"); banner1.textContent = day.banner1;
+    const banner2 = document.createElement("strong"); banner2.textContent = day.banner2;
+    const total = document.createElement("strong"); total.className = "click-total"; total.textContent = day.total;
+    row.append(date, banner1, banner2, total);
+    return row;
+  }
+
+  function renderPromoClicks(data) {
+    document.getElementById("metric-clicks-banner1").textContent = data.totals.banner1;
+    document.getElementById("metric-clicks-banner2").textContent = data.totals.banner2;
+    document.getElementById("metric-clicks-total").textContent = data.totals.total;
+    const table = document.getElementById("clicks-table");
+    if (!data.days.length) {
+      const empty = document.createElement("p");
+      empty.className = "trash-empty";
+      empty.textContent = "Chưa có dữ liệu click.";
+      table.replaceChildren(empty);
+      return;
+    }
+    table.replaceChildren(...data.days.map(createClickRow));
+  }
+
+  async function loadPromoClicks() {
+    const searchParams = new URLSearchParams(
+      state.clickDate ? { date: state.clickDate } : { days: state.clickRange },
+    );
+    const requestedDate = state.clickDate;
+    const requestedRange = state.clickRange;
+    const data = await request(`/api/admin/promo-clicks?${searchParams}`);
+    if (requestedDate !== state.clickDate || requestedRange !== state.clickRange) return;
+    document.getElementById("clear-clicks-date").hidden = !state.clickDate;
+    document.getElementById("clicks-range").disabled = Boolean(state.clickDate);
+    renderPromoClicks(data);
+  }
+
   function localDateTime(value) {
     const date = value ? new Date(value) : new Date();
     const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
@@ -585,6 +627,19 @@
   document.getElementById("clear-posts-date").addEventListener("click", () => {
     document.getElementById("posts-date-filter").value = "";
     applyPostDateFilter("").catch((error) => toast(error.message));
+  });
+  document.getElementById("clicks-range").addEventListener("change", (event) => {
+    state.clickRange = event.target.value;
+    loadPromoClicks().catch((error) => toast(error.message));
+  });
+  document.getElementById("clicks-date").addEventListener("change", (event) => {
+    state.clickDate = event.target.value;
+    loadPromoClicks().catch((error) => toast(error.message));
+  });
+  document.getElementById("clear-clicks-date").addEventListener("click", () => {
+    document.getElementById("clicks-date").value = "";
+    state.clickDate = "";
+    loadPromoClicks().catch((error) => toast(error.message));
   });
   document.getElementById("crawl-form").addEventListener("submit", runCrawl);
   document.querySelectorAll('input[name="crawl-mode"]').forEach((input) => input.addEventListener("change", setCrawlMode));

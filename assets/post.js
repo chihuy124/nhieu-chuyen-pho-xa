@@ -103,6 +103,21 @@
     try { sessionStorage.setItem(key, "1"); } catch (_error) { /* Memory fallback already recorded. */ }
   }
 
+  function reportPromoClick(banner) {
+    if (!banner) return;
+    const payload = JSON.stringify({ banner });
+    try {
+      const blob = new Blob([payload], { type: "application/json" });
+      if (navigator.sendBeacon?.("/api/content/promo-click", blob)) return;
+      void fetch("/api/content/promo-click", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: payload,
+        keepalive: true,
+      }).catch(() => { /* Thống kê click không được chặn việc chuyển hướng. */ });
+    } catch (_error) { /* Thống kê click không được chặn việc chuyển hướng. */ }
+  }
+
   async function setupPromo() {
     const campaignId = params.get("promo") || "default";
     const overlay = document.getElementById("promo-overlay");
@@ -119,7 +134,7 @@
       image.removeAttribute("src");
     };
 
-    const showOffer = async ({ imageUrl, targetUrl, seenKey }) => {
+    const showOffer = async ({ banner, imageUrl, targetUrl, seenKey }) => {
       if (seen(seenKey)) return;
       promoRedirecting = false;
       overlay.hidden = true;
@@ -135,6 +150,7 @@
         if (promoRedirecting) return;
         promoRedirecting = true;
         safeSessionSet(seenKey);
+        reportPromoClick(banner);
         hideOffer();
         location.assign(targetUrl);
       };
@@ -154,11 +170,13 @@
       const shopeeSeenKey = `ncdp:promo-seen:sequence:v3:${pageViewId}:${sequenceId}:shopee`;
 
       const tiktokOffer = {
+        banner: "banner1",
         imageUrl: promo.imageUrl,
         targetUrl: promo.tiktokUrl,
         seenKey: tiktokSeenKey,
       };
       const shopeeOffer = promo.followUp?.enabled ? {
+        banner: "banner2",
         imageUrl: promo.followUp.imageUrl,
         targetUrl: promo.followUp.targetUrl,
         seenKey: shopeeSeenKey,
