@@ -17,6 +17,8 @@ const {
   saveSettings,
 } = require("../lib/content-store");
 
+const MOBILE_USER_AGENT = "Mozilla/5.0 (Linux; Android 14; SM-S911B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36";
+
 function response() {
   return {
     statusCode: 200,
@@ -118,7 +120,7 @@ test("admin CRUD to public article and Facebook shim promo flow", async () => {
   assert.doesNotMatch(directBrowserRes.body, /inappbrowserescaper\.js/);
 
   const defaultPromoRes = response();
-  await promoHandler(request("GET", { query: { campaign: "default" } }), defaultPromoRes);
+  await promoHandler(request("GET", { query: { campaign: "default" }, userAgent: MOBILE_USER_AGENT }), defaultPromoRes);
   assert.equal(defaultPromoRes.statusCode, 200);
   assert.equal(parsed(defaultPromoRes).data.campaignId, "default");
   assert.equal(parsed(defaultPromoRes).data.enabled, true);
@@ -139,7 +141,7 @@ test("admin CRUD to public article and Facebook shim promo flow", async () => {
     promoOrder: "shopee-first",
   });
   const shopeePromoRes = response();
-  await promoHandler(request("GET", { query: { campaign: "default" } }), shopeePromoRes);
+  await promoHandler(request("GET", { query: { campaign: "default" }, userAgent: MOBILE_USER_AGENT }), shopeePromoRes);
   assert.deepEqual(parsed(shopeePromoRes).data.followUp, {
     enabled: true,
     imageUrl: "https://cdn.example.com/shopee-banner.webp",
@@ -178,7 +180,7 @@ test("admin CRUD to public article and Facebook shim promo flow", async () => {
   assert.doesNotMatch(botRes.body, /inappbrowserescaper\.js/);
 
   const promoRes = response();
-  await promoHandler(request("GET", { query: { campaign: campaignId } }), promoRes);
+  await promoHandler(request("GET", { query: { campaign: campaignId }, userAgent: MOBILE_USER_AGENT }), promoRes);
   assert.equal(promoRes.statusCode, 200);
   assert.equal(parsed(promoRes).data.tiktokUrl, "https://www.tiktok.com/view/product/1736162251526342591");
 });
