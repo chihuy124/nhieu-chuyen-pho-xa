@@ -62,7 +62,9 @@ test("Shopee URL policy only accepts HTTPS Vietnamese Shopee domains", () => {
   assert.equal(isAllowedShopeeUrl("https://shopee.vn/product/123/456"), true);
   assert.equal(isAllowedShopeeUrl("https://s.shopee.vn/AbCd12"), true);
   assert.equal(isAllowedShopeeUrl("https://affiliate.shopee.vn/offer"), true);
+  assert.equal(isAllowedShopeeUrl("https://shope.ee/AbCd12"), true);
   assert.equal(isAllowedShopeeUrl("https://evilshopee.vn/phish"), false);
+  assert.equal(isAllowedShopeeUrl("https://shope.ee.evil.example/phish"), false);
   assert.equal(isAllowedShopeeUrl("http://shopee.vn/insecure"), false);
   assert.equal(isAllowedShopeeUrl("https://shopee.com/product"), false);
 });

@@ -130,6 +130,7 @@ test("admin CRUD to public article and Facebook shim promo flow", async () => {
     enabled: false,
     imageUrl: "",
     targetUrl: "",
+    platform: "tiktok",
     delayMs: 1000,
   });
 
@@ -146,6 +147,7 @@ test("admin CRUD to public article and Facebook shim promo flow", async () => {
     enabled: true,
     imageUrl: "https://cdn.example.com/shopee-banner.webp",
     targetUrl: "https://vt.tiktok.com/AbCd12",
+    platform: "tiktok",
     delayMs: 1000,
   });
   assert.equal(parsed(shopeePromoRes).data.promoOrder, "shopee-first");

@@ -584,12 +584,13 @@
     document.getElementById("setting-shopee-banner").value = state.settings.shopeeImageUrl || "";
     document.getElementById("setting-shopee-url").value = state.settings.shopeeUrl || "";
     document.getElementById("setting-shopee-enabled").checked = Boolean(state.settings.shopeeEnabled);
+    document.getElementById("setting-banner2-platform").value = state.settings.banner2Platform || "tiktok";
     document.getElementById("setting-promo-order").value = state.settings.promoOrder || "tiktok-first";
   }
 
   async function saveSettings(event) {
     event.preventDefault();
-    const payload = { siteTitle:document.getElementById("setting-title").value, siteDescription:document.getElementById("setting-description").value, fanpageUrl:document.getElementById("setting-fanpage").value, promoImageUrl:document.getElementById("setting-banner").value, defaultTikTokUrl:document.getElementById("setting-tiktok").value, promoEnabled:document.getElementById("setting-promo-enabled").checked, shopeeImageUrl:document.getElementById("setting-shopee-banner").value, shopeeUrl:document.getElementById("setting-shopee-url").value, shopeeEnabled:document.getElementById("setting-shopee-enabled").checked, promoOrder:document.getElementById("setting-promo-order").value };
+    const payload = { siteTitle:document.getElementById("setting-title").value, siteDescription:document.getElementById("setting-description").value, fanpageUrl:document.getElementById("setting-fanpage").value, promoImageUrl:document.getElementById("setting-banner").value, defaultTikTokUrl:document.getElementById("setting-tiktok").value, promoEnabled:document.getElementById("setting-promo-enabled").checked, shopeeImageUrl:document.getElementById("setting-shopee-banner").value, shopeeUrl:document.getElementById("setting-shopee-url").value, shopeeEnabled:document.getElementById("setting-shopee-enabled").checked, banner2Platform:document.getElementById("setting-banner2-platform").value, promoOrder:document.getElementById("setting-promo-order").value };
     try { state.settings = await request("/api/admin/settings", { method:"PUT", body:JSON.stringify(payload) }); toast("Đã lưu cấu hình"); } catch (error) { toast(error.message); }
   }
 
