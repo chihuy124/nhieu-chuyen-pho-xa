@@ -106,6 +106,14 @@ test("validators reject unsafe values and normalize immutable post copies", () =
   assert.throws(() => validateSettingsInput({ shopeeEnabled: true, shopeeImageUrl: "", shopeeUrl: "" }, DEFAULT_SETTINGS), /TikTok/);
   assert.throws(() => validateSettingsInput({ shopeeEnabled: true, shopeeImageUrl: "/banner.webp", shopeeUrl: "https://evil.example" }, DEFAULT_SETTINGS), /TikTok/);
   assert.throws(() => validateSettingsInput({ shopeeUrl: "https://s.shopee.vn/AbCd12" }, DEFAULT_SETTINGS), /TikTok/);
+  const productSettings = validateSettingsInput({
+    defaultTikTokUrl: "https://shop.tiktok.com/vn/pdp/1736162251526342591?scene=pdp",
+    shopeeEnabled: true,
+    shopeeImageUrl: "/assets/shopee-banner.webp",
+    shopeeUrl: "https://shop.tiktok.com/vn/pdp/1729438480898231207",
+  }, DEFAULT_SETTINGS);
+  assert.equal(productSettings.defaultTikTokUrl, "https://www.tiktok.com/view/product/1736162251526342591?scene=pdp");
+  assert.equal(productSettings.shopeeUrl, "https://www.tiktok.com/view/product/1729438480898231207");
 });
 
 test("API error paths and legacy shim behavior are safe", async () => {

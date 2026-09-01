@@ -6,8 +6,37 @@ const {
   isAllowedFacebookUrl,
   isAllowedShopeeUrl,
   isAllowedTikTokUrl,
+  normalizeTikTokProductUrl,
   sanitizeExternalImageUrl,
 } = require("../lib/security");
+
+test("TikTok shop product links are rewritten to the faster view page", () => {
+  const query = "?_d=eh95e03edkac9b&scene=pdp&utm_source=copy";
+  assert.equal(
+    normalizeTikTokProductUrl(`https://shop.tiktok.com/vn/pdp/1736162251526342591${query}`),
+    `https://www.tiktok.com/view/product/1736162251526342591${query}`,
+  );
+  assert.equal(
+    normalizeTikTokProductUrl("https://shop.tiktok.com/vn/pdp/1736162251526342591/"),
+    "https://www.tiktok.com/view/product/1736162251526342591",
+  );
+  assert.equal(
+    normalizeTikTokProductUrl("https://shop.tiktok.com/pdp/1729438480898231207"),
+    "https://www.tiktok.com/view/product/1729438480898231207",
+  );
+  assert.equal(isAllowedTikTokUrl(normalizeTikTokProductUrl("https://shop.tiktok.com/vn/pdp/1736162251526342591")), true);
+});
+
+test("links that are not TikTok shop product pages are left untouched", () => {
+  const alreadyFast = "https://www.tiktok.com/view/product/1729438480898231207?utm_source=copy";
+  assert.equal(normalizeTikTokProductUrl(alreadyFast), alreadyFast);
+  assert.equal(normalizeTikTokProductUrl("https://vt.tiktok.com/ZS9BfrX47UtRw-Z0BUh/"), "https://vt.tiktok.com/ZS9BfrX47UtRw-Z0BUh/");
+  assert.equal(normalizeTikTokProductUrl("https://www.tiktok.com/@nguoidung/video/123"), "https://www.tiktok.com/@nguoidung/video/123");
+  assert.equal(normalizeTikTokProductUrl("https://shop.example.com/vn/pdp/1736162251526342591"), "https://shop.example.com/vn/pdp/1736162251526342591");
+  assert.equal(normalizeTikTokProductUrl("https://shop.tiktok.com/vn/pdp/khong-phai-so"), "https://shop.tiktok.com/vn/pdp/khong-phai-so");
+  assert.equal(normalizeTikTokProductUrl(""), "");
+  assert.equal(normalizeTikTokProductUrl("khong-phai-url"), "khong-phai-url");
+});
 
 test("Facebook URL policy only accepts HTTPS Facebook pages", () => {
   assert.equal(isAllowedFacebookUrl("https://www.facebook.com/nhieuchuyenphoxa"), true);

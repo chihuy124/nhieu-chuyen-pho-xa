@@ -3,6 +3,7 @@ const { put } = require("./store");
 const { requireAdmin } = require("../../lib/admin-guard");
 const { json, readJson, requireMethod, requireMutationHeader } = require("../../lib/http");
 const { isAllowedTikTokUrl } = require("../../lib/security");
+const { resolveTikTokLink } = require("../../lib/tiktok-link");
 const { checkRateLimit } = require("../../lib/rate-limit");
 
 module.exports = async (req, res) => {
@@ -24,7 +25,7 @@ module.exports = async (req, res) => {
     if (!postSlug) return json(res, 400, { success: false, error: "Hãy chọn bài viết cho link này" });
 
     const id = crypto.randomBytes(6).toString("hex");
-    await put(id, { tiktokUrl: new URL(rawUrl).toString(), postSlug, createdAt: new Date().toISOString() });
+    await put(id, { tiktokUrl: await resolveTikTokLink(rawUrl), postSlug, createdAt: new Date().toISOString() });
 
     return json(res, 200, { success: true, id });
   } catch (_error) {

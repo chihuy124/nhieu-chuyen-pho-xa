@@ -150,11 +150,19 @@ test("admin CRUD to public article and Facebook shim promo flow", async () => {
   await saveSettings(DEFAULT_SETTINGS);
 
   const shimRes = response();
-  await createShimHandler(request("POST", {
-    cookie,
-    mutation: true,
-    body: { postSlug: slug, url: "https://vt.tiktok.com/abc123" },
-  }), shimRes);
+  const originalShimFetch = global.fetch;
+  global.fetch = async () => ({
+    headers: { get: (name) => (name.toLowerCase() === "location" ? "https://shop.tiktok.com/vn/pdp/1736162251526342591" : null) },
+  });
+  try {
+    await createShimHandler(request("POST", {
+      cookie,
+      mutation: true,
+      body: { postSlug: slug, url: "https://vt.tiktok.com/abc123" },
+    }), shimRes);
+  } finally {
+    global.fetch = originalShimFetch;
+  }
   const campaignId = parsed(shimRes).id;
   assert.match(campaignId, /^[a-f0-9]{12}$/);
 
@@ -172,7 +180,7 @@ test("admin CRUD to public article and Facebook shim promo flow", async () => {
   const promoRes = response();
   await promoHandler(request("GET", { query: { campaign: campaignId } }), promoRes);
   assert.equal(promoRes.statusCode, 200);
-  assert.equal(parsed(promoRes).data.tiktokUrl, "https://vt.tiktok.com/abc123");
+  assert.equal(parsed(promoRes).data.tiktokUrl, "https://www.tiktok.com/view/product/1736162251526342591");
 });
 
 test("crawl endpoint imports a WordPress batch and reports progress", async () => {
