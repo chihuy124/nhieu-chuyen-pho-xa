@@ -1,6 +1,8 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 
+process.env.ADMIN_SESSION_SECRET = "promo-device-secret-that-is-long-enough";
+
 const promoHandler = require("../lib/api-content/promo");
 const { DEFAULT_SETTINGS, saveSettings } = require("../lib/content-store");
 const { isMobileUserAgent } = require("../lib/user-agent");

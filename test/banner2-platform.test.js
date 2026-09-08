@@ -3,8 +3,11 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 
+process.env.ADMIN_SESSION_SECRET = "banner2-platform-secret-that-is-long-enough";
+
 const promoHandler = require("../lib/api-content/promo");
 const { DEFAULT_SETTINGS, saveSettings } = require("../lib/content-store");
+const { resolveBanner2Target } = require("../lib/promo");
 const { validateSettingsInput } = require("../lib/validators");
 
 const ANDROID = "Mozilla/5.0 (Linux; Android 14; SM-S911B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36";
@@ -70,32 +73,33 @@ test("each platform only accepts links from its own marketplace", () => {
 });
 
 test("a Shopee link is served untouched while a TikTok link still gets rewritten", async () => {
-  const shopeeFollowUp = await followUpFor({
+  const shopeeSettings = {
     ...DEFAULT_SETTINGS,
     promoEnabled: true,
     banner2Platform: "shopee",
     shopeeEnabled: true,
     shopeeImageUrl: "/assets/shopee-09-09.webp",
     shopeeUrl: SHOPEE_URL,
-  });
-  assert.deepEqual(shopeeFollowUp, {
-    enabled: true,
-    imageUrl: "/assets/shopee-09-09.webp",
-    targetUrl: SHOPEE_URL,
-    platform: "shopee",
-    delayMs: 1000,
-  });
+  };
+  const shopeeFollowUp = await followUpFor(shopeeSettings);
+  assert.deepEqual(Object.keys(shopeeFollowUp).sort(), ["delayMs", "enabled", "imageUrl", "platform", "token"]);
+  assert.equal(shopeeFollowUp.enabled, true);
+  assert.equal(shopeeFollowUp.imageUrl, "/assets/shopee-09-09.webp");
+  assert.equal(shopeeFollowUp.platform, "shopee");
+  assert.ok(shopeeFollowUp.token, "banner 2 phải kèm lượt cấp để đổi lấy link");
+  assert.equal(resolveBanner2Target(shopeeSettings), SHOPEE_URL);
 
-  const tiktokFollowUp = await followUpFor({
+  const tiktokSettings = {
     ...DEFAULT_SETTINGS,
     promoEnabled: true,
     banner2Platform: "tiktok",
     shopeeEnabled: true,
     shopeeImageUrl: "/assets/shopee-09-09.webp",
     shopeeUrl: "https://shop.tiktok.com/vn/pdp/1736162251526342591",
-  });
+  };
+  const tiktokFollowUp = await followUpFor(tiktokSettings);
   assert.equal(tiktokFollowUp.platform, "tiktok");
-  assert.equal(tiktokFollowUp.targetUrl, TIKTOK_URL);
+  assert.equal(resolveBanner2Target(tiktokSettings), TIKTOK_URL);
 
   await saveSettings(DEFAULT_SETTINGS);
 });
@@ -110,7 +114,7 @@ test("a Shopee link stored while the platform says TikTok never reaches visitors
     shopeeUrl: SHOPEE_URL,
   });
   assert.equal(followUp.enabled, false);
-  assert.equal(followUp.targetUrl, "");
+  assert.equal(followUp.token, "");
   await saveSettings(DEFAULT_SETTINGS);
 });
 
@@ -131,6 +135,7 @@ test("a Shopee banner 2 stays hidden on desktop just like the TikTok one", async
   const onDesktop = await promoFor(shopeeSettings, MACBOOK);
   assert.equal(onDesktop.enabled, false);
   assert.equal(onDesktop.followUp.enabled, false, "banner 2 cũng phải tắt trên máy tính");
+  assert.equal(onDesktop.followUp.token, "", "máy tính không được nhận lượt cấp nào");
 
   await saveSettings(DEFAULT_SETTINGS);
 });

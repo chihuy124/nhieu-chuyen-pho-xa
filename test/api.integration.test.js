@@ -129,7 +129,7 @@ test("admin CRUD to public article and Facebook shim promo flow", async () => {
   assert.deepEqual(parsed(defaultPromoRes).data.followUp, {
     enabled: false,
     imageUrl: "",
-    targetUrl: "",
+    token: "",
     platform: "tiktok",
     delayMs: 1000,
   });
@@ -143,13 +143,13 @@ test("admin CRUD to public article and Facebook shim promo flow", async () => {
   });
   const shopeePromoRes = response();
   await promoHandler(request("GET", { query: { campaign: "default" }, userAgent: MOBILE_USER_AGENT }), shopeePromoRes);
-  assert.deepEqual(parsed(shopeePromoRes).data.followUp, {
-    enabled: true,
-    imageUrl: "https://cdn.example.com/shopee-banner.webp",
-    targetUrl: "https://vt.tiktok.com/AbCd12",
-    platform: "tiktok",
-    delayMs: 1000,
-  });
+  const shopeeFollowUp = parsed(shopeePromoRes).data.followUp;
+  assert.equal(shopeeFollowUp.enabled, true);
+  assert.equal(shopeeFollowUp.imageUrl, "https://cdn.example.com/shopee-banner.webp");
+  assert.equal(shopeeFollowUp.platform, "tiktok");
+  assert.equal(shopeeFollowUp.delayMs, 1000);
+  assert.ok(shopeeFollowUp.token);
+  assert.equal(shopeeFollowUp.targetUrl, undefined, "link banner 2 không được lộ trong phản hồi promo");
   assert.equal(parsed(shopeePromoRes).data.promoOrder, "shopee-first");
   await saveSettings(DEFAULT_SETTINGS);
 

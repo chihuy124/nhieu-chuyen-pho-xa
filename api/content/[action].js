@@ -6,5 +6,6 @@ module.exports = createRouteDispatcher({
   posts: require("../../lib/api-content/posts"),
   promo: require("../../lib/api-content/promo"),
   "promo-click": require("../../lib/api-content/promo-click"),
+  "promo-target": require("../../lib/api-content/promo-target"),
   settings: require("../../lib/api-content/settings"),
 });
