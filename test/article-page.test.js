@@ -1,5 +1,8 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
+const vm = require("node:vm");
 
 const { renderArticlePage } = require("../lib/article-page");
 const { renderInAppEscapePage } = require("../lib/in-app-escape-page");
@@ -68,6 +71,68 @@ test("server-rendered article page contains content and escaped Open Graph metad
   assert.match(html, /site\.css\?v=3/);
 });
 
+test("article client trusts server-rendered content without refetching post or settings", () => {
+  const script = fs.readFileSync(path.join(__dirname, "..", "assets", "post.js"), "utf8");
+
+  assert.doesNotMatch(script, /NCDP\.api\(\s*["'`]\/api\/content\/settings/);
+  assert.doesNotMatch(script, /NCDP\.api\(\s*`\/api\/content\/post\?slug=/);
+
+  // Promo remains client-side because it depends on the current campaign and device checks.
+  assert.match(script, /NCDP\.api\(`\/api\/content\/promo\?campaign=/);
+  assert.match(script, /NCDP\.api\(["'`]\/api\/content\/promo-target["'`]/);
+  assert.match(script, /JSON\.stringify\(\{ token: followUpToken, signals: collectDeviceSignals\(\) \}\)/);
+  assert.match(script, /location\.assign\(resolvedTarget\)/);
+});
+
+test("legacy post skeleton redirects its slug to the server-rendered route and preserves a valid campaign", async () => {
+  const script = fs.readFileSync(path.join(__dirname, "..", "assets", "post.js"), "utf8");
+  const apiCalls = [];
+  const redirects = [];
+  const overlay = { hidden: true, onclick: null, onkeydown: null };
+  const image = { removeAttribute() {} };
+  const closeButton = { focus() {} };
+  const document = {
+    title: "Đang tải bài viết…",
+    body: { classList: { add() {}, remove() {} } },
+    addEventListener() {},
+    getElementById(id) {
+      return { "promo-overlay": overlay, "promo-image": image, "promo-close": closeButton }[id] || null;
+    },
+  };
+  const origin = "https://news.example.com";
+  const location = {
+    origin,
+    pathname: "/post.html",
+    search: "?slug=tin%20n%C3%B3ng&promo=a1b2c3d4e5f6",
+    href: `${origin}/post.html?slug=tin%20n%C3%B3ng&promo=a1b2c3d4e5f6`,
+    replace(value) { redirects.push(value); },
+  };
+
+  await vm.runInNewContext(script, {
+    URL,
+    URLSearchParams,
+    document,
+    history: { state: null, replaceState() {} },
+    location,
+    performance: { getEntriesByType: () => [] },
+    NCDP: {
+      async api(url) {
+        apiCalls.push(url);
+        throw new Error("Promo disabled in legacy redirect test");
+      },
+    },
+    sessionStorage: { getItem: () => null, setItem() {} },
+    window: { addEventListener() {} },
+    setTimeout,
+  });
+
+  assert.equal(redirects.length, 1);
+  const redirect = new URL(redirects[0], origin);
+  assert.equal(redirect.pathname, "/post/tin%20n%C3%B3ng");
+  assert.equal(redirect.searchParams.get("promo"), "a1b2c3d4e5f6");
+  assert.deepEqual(apiCalls, []);
+});
+
 test("article page falls back to site metadata and avoids duplicate embedded video", () => {
   const video = "https://cdn.example.com/inside.mp4";
   const html = renderArticlePage({
@@ -86,7 +151,7 @@ test("article page falls back to site metadata and avoids duplicate embedded vid
   assert.match(html, /description" content="Mô tả site/);
   assert.equal((html.match(/inside\.mp4/g) || []).length, 1);
   assert.match(html, /<video[^>]*preload="auto"/);
-  assert.match(html, /post\.js\?v=9/);
+  assert.match(html, /post\.js\?v=10/);
   assert.match(html, /<img id="promo-image" alt="Khuyến mãi đặc biệt"/);
   assert.doesNotMatch(html, /id="promo-image" src=/);
   assert.doesNotMatch(html, /article-cover/);

@@ -1,9 +1,19 @@
 (async function () {
-  const article = document.getElementById("article");
-  const errorState = document.getElementById("article-error");
   const params = new URLSearchParams(location.search);
-  const pathSegments = location.pathname.split("/").filter(Boolean);
-  const slug = params.get("slug") || pathSegments.at(-1) || "";
+  if (location.pathname === "/post.html") {
+    const legacySlug = params.get("slug");
+    if (!legacySlug) {
+      location.replace("/");
+      return;
+    }
+    const target = new URL(`/post/${encodeURIComponent(legacySlug)}`, location.origin);
+    const campaignId = params.get("promo");
+    if (campaignId === "default" || /^[a-f0-9]{12,32}$/i.test(campaignId || "")) {
+      target.searchParams.set("promo", campaignId);
+    }
+    location.replace(`${target.pathname}${target.search}`);
+    return;
+  }
   let promoRedirecting = false;
   const memorySeenKeys = new Set();
 
@@ -18,81 +28,6 @@
   }
 
   const pageViewId = createPromoPageViewId();
-
-  function safeFacebookUrl(value) {
-    try {
-      const url = new URL(String(value || "").trim());
-      const hostname = url.hostname.toLowerCase().replace(/\.$/, "");
-      const isFacebookHost = ["facebook.com", "fb.com"].some((domain) => hostname === domain || hostname.endsWith(`.${domain}`));
-      return url.protocol === "https:" && !url.username && !url.password && isFacebookHost ? url.toString() : "";
-    } catch (_error) {
-      return "";
-    }
-  }
-
-  function renderFanpageCallToAction(settings) {
-    const fanpageUrl = safeFacebookUrl(settings.fanpageUrl);
-    if (!fanpageUrl) return;
-    const callToAction = document.createElement("p");
-    callToAction.className = "article-fanpage";
-    callToAction.append("FANPAGE: ");
-    const link = document.createElement("a");
-    link.href = fanpageUrl;
-    link.target = "_blank";
-    link.rel = "noopener noreferrer";
-    link.textContent = "THEO DÕI TẠI ĐÂY";
-    callToAction.append(link);
-    article.append(callToAction);
-  }
-
-  function renderPost(post, settings) {
-    article.replaceChildren();
-    const header = document.createElement("header");
-    header.className = "article-header";
-    const title = document.createElement("h1");
-    title.textContent = post.title;
-    const meta = document.createElement("div");
-    meta.className = "article-meta";
-    const time = document.createElement("time");
-    time.dateTime = post.publishedAt;
-    time.textContent = NCDP.formatDate(post.publishedAt);
-    meta.append(time);
-    header.append(title, meta);
-    article.append(header);
-    if (post.excerpt) {
-      const excerpt = document.createElement("p");
-      excerpt.className = "article-excerpt";
-      excerpt.textContent = post.excerpt;
-      article.append(excerpt);
-    }
-    if (post.coverImage) {
-      const cover = document.createElement("img");
-      cover.className = "article-cover";
-      cover.src = post.coverImage;
-      cover.alt = post.coverAlt || "";
-      article.append(cover);
-    }
-    const content = document.createElement("div");
-    content.className = "article-content";
-    content.innerHTML = post.contentHtml || "";
-    const firstEmbeddedVideo = content.querySelector("video");
-    if (firstEmbeddedVideo) firstEmbeddedVideo.preload = "auto";
-    article.append(content);
-
-    const includedSources = new Set([...content.querySelectorAll("video, source")].map((node) => node.src).filter(Boolean));
-    let hasPriorityVideo = Boolean(firstEmbeddedVideo);
-    (post.videos || []).filter((url) => !includedSources.has(url)).forEach((url) => {
-      const video = document.createElement("video");
-      video.className = "article-video";
-      video.src = url;
-      video.controls = true;
-      video.playsInline = true;
-      video.preload = hasPriorityVideo ? "metadata" : "auto";
-      hasPriorityVideo = true;
-      article.append(video);
-    });
-    renderFanpageCallToAction(settings);
-  }
 
   function safeSessionGet(key) {
     try { return sessionStorage.getItem(key); } catch (_error) { return memorySeenKeys.has(key) ? "1" : null; }
@@ -286,17 +221,5 @@
     }
   }
 
-  try {
-    const [settings, post] = await Promise.all([
-      NCDP.api("/api/content/settings"),
-      NCDP.api(`/api/content/post?slug=${encodeURIComponent(slug)}`),
-    ]);
-    NCDP.applySettings(settings);
-    document.title = `${post.title} – ${settings.siteTitle}`;
-    renderPost(post, settings);
-    await setupPromo();
-  } catch (_error) {
-    article.hidden = true;
-    errorState.hidden = false;
-  }
+  await setupPromo();
 })();

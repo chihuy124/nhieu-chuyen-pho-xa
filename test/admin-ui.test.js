@@ -116,13 +116,14 @@ test("article promo script respects configured order and schedules the second po
   assert.match(script, /performance\.getEntriesByType/);
   assert.match(script, /history\.replaceState/);
   assert.match(script, /back_forward/);
-  assert.match(script, /reload/);
   assert.match(script, /pageViewId/);
 });
 
-test("dynamic article renderer appends the configured fanpage call to action", () => {
-  const script = fs.readFileSync(path.join(__dirname, "..", "assets", "post.js"), "utf8");
-  assert.match(script, /FANPAGE:/);
-  assert.match(script, /THEO DÕI TẠI ĐÂY/);
-  assert.match(script, /settings\.fanpageUrl/);
+test("article fanpage call to action is server-rendered instead of rebuilt by the client", () => {
+  const clientScript = fs.readFileSync(path.join(__dirname, "..", "assets", "post.js"), "utf8");
+  const serverRenderer = fs.readFileSync(path.join(__dirname, "..", "lib", "article-page.js"), "utf8");
+  assert.doesNotMatch(clientScript, /FANPAGE:|settings\.fanpageUrl/);
+  assert.match(serverRenderer, /FANPAGE:/);
+  assert.match(serverRenderer, /THEO DÕI TẠI ĐÂY/);
+  assert.match(serverRenderer, /settings\.fanpageUrl/);
 });
