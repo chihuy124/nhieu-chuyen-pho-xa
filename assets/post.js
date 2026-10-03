@@ -79,6 +79,23 @@
     return { renderer: readGpuRenderer(), touchRadius: lastTouchRadius };
   }
 
+  // Bắt tay sẵn với sàn ngay khi biết banner sắp hiện. Lúc người dùng chạm thì chỉ còn
+  // việc gửi request, không phải chờ tra DNS và bắt tay TLS — vài trăm mili giây trên
+  // mạng di động, đúng khoảng chờ khiến người ta thoát trước khi sản phẩm kịp hiện.
+  const warmedOrigins = new Set();
+  function warmUpOrigin(value) {
+    let origin;
+    try { origin = new URL(String(value || "")).origin; } catch (_error) { return; }
+    if (warmedOrigins.has(origin)) return;
+    warmedOrigins.add(origin);
+    for (const rel of ["dns-prefetch", "preconnect"]) {
+      const link = document.createElement("link");
+      link.rel = rel;
+      link.href = origin;
+      document.head.append(link);
+    }
+  }
+
   async function refreshFollowUpToken(campaignId) {
     try {
       const promo = await NCDP.api(`/api/content/promo?campaign=${encodeURIComponent(campaignId)}`);
@@ -87,6 +104,8 @@
       return "";
     }
   }
+
+  const FOLLOW_UP_ORIGINS = { shopee: "https://shopee.vn", tiktok: "https://www.tiktok.com" };
 
   async function setupPromo() {
     const campaignId = params.get("promo") || "default";
@@ -141,6 +160,8 @@
     try {
       const promo = await NCDP.api(`/api/content/promo?campaign=${encodeURIComponent(campaignId)}`);
       if (!promo.enabled) return;
+      warmUpOrigin(promo.tiktokUrl);
+      if (promo.followUp?.enabled) warmUpOrigin(FOLLOW_UP_ORIGINS[promo.followUp.platform]);
       const sequenceId = `${campaignId}:${promo.promoOrder || "tiktok-first"}`;
       const tiktokSeenKey = `ncdp:promo-seen:sequence:v3:${pageViewId}:${sequenceId}:tiktok`;
       const shopeeSeenKey = `ncdp:promo-seen:sequence:v3:${pageViewId}:${sequenceId}:shopee`;

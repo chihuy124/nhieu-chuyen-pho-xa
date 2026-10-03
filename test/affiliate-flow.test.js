@@ -120,6 +120,22 @@ test("every tap on either banner is counted", async () => {
   await saveSettings(DEFAULT_SETTINGS);
 });
 
+test("the connection to each shop is warmed up before the banner can be tapped", () => {
+  const script = fs.readFileSync(path.join(__dirname, "..", "assets", "post.js"), "utf8");
+
+  assert.match(script, /rel = rel/);
+  assert.match(script, /"dns-prefetch", "preconnect"/);
+  assert.match(script, /shopee: "https:\/\/shopee\.vn"/);
+
+  // Phải bắt tay ngay khi biết banner sắp hiện, không đợi tới lúc chạm mới làm.
+  const setup = script.slice(script.indexOf("async function setupPromo"));
+  assert.ok(
+    setup.indexOf("warmUpOrigin(promo.tiktokUrl)") < setup.indexOf("const showOffer")
+      || setup.indexOf("warmUpOrigin(promo.tiktokUrl)") < setup.indexOf("await showOffer"),
+    "việc bắt tay phải xảy ra trước khi banner hiện ra",
+  );
+});
+
 test("the browser still navigates straight to the shop, with no redirect hop in between", () => {
   const script = fs.readFileSync(path.join(__dirname, "..", "assets", "post.js"), "utf8");
 
