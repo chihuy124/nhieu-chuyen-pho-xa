@@ -71,9 +71,13 @@ test("a desktop faking a phone user agent is turned away by its GPU", async () =
   assert.equal(emulated.statusCode, 404);
   assert.equal(emulated.payload.data, undefined);
 
-  // Chạm dựng bởi DevTools có bán kính gần bằng 0 dù GPU bị giấu.
+  // Chạm dựng bởi DevTools có bán kính 0.5 dù GPU bị giấu.
   const syntheticTouch = await exchange({ token, signals: { renderer: "", touchRadius: 0.5 } });
   assert.equal(syntheticTouch.statusCode, 404);
+
+  // Ngược lại, bán kính nhỏ nhưng hợp lệ của bút cảm ứng không được chặn nhầm.
+  const stylus = await exchange({ token, signals: { renderer: "", touchRadius: 1 } });
+  assert.equal(stylus.statusCode, 200, "bút cảm ứng vẫn phải mua hàng được");
 
   await saveSettings(DEFAULT_SETTINGS);
 });
